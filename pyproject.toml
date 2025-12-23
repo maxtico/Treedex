@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "treedex"
+version = "0.1.0"
+description = "Interactive phylogenetic data exploration dashboard"
+readme = "README.md"
+requires-python = ">=3.12"
+
+authors = [
+    { name = "Max Ticó", email = "max.tico@ub.edu" },
+]
+
+license = { text = "MIT" }
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+    "Framework :: Dash"
+]
+
+dependencies = [
+    "pandas>=2.0",
+    "plotly>=5.9.0",
+    "dash>=2.14.0",
+    "dash-bootstrap-components>=1.5.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/your-org/treedex"
+Repository = "https://github.com/your-org/treedex"
+Documentation = "https://your-docs-url"
+Issues = "https://github.com/your-org/treedex/issues"
+
+[project.scripts]
+treedex = "treedex.main:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
