@@ -1,108 +1,107 @@
-# =====================================
-# Treedex Application (Modular Version)
-# =====================================
-
 import dash
 from dash import dcc, html, dash_table
 import pandas as pd
 import plotly.express as px
+import argparse
+import sys
+from pathlib import Path
 
 # Importem les nostres funcions modulars
-from components.plots import make_scatter_plot
-from components.plots import make_scatter_combo
-from callbacks import register_callbacks
-# del treedex.components.plots import make_pie_plot   # si fas un mòdul també pel pie
+from treedex.components.plots import make_scatter_plot, make_scatter_combo
+from treedex.callbacks import register_callbacks
 
-# ============================
-# Sample artificial data
-# ============================
+# Aqui tenim una funció per parsejar arguments de línia de comandes
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Treedex dashboard"
+    )
+    parser.add_argument(
+        "-d", "--data",
+        required=True,
+        help="Path to species information CSV file"
+    )
+    return parser.parse_args()
 
-df_table = pd.DataFrame({
-    "Species": ["Human", "Mouse", "Elephant", "Whale"],
-    "Weight (kg)": [70, 0.03, 5000, 30000],
-    "Life Expectancy (years)": [79, 2, 70, 90]
-})
 
-df_scatter = pd.DataFrame({
-    "Species": ["Human", "Mouse", "Elephant", "Whale"],
-    "X": [1, 2, 3, 4],
-    "Y": [10, 15, 13, 17]
-})
+def main():
 
-# ============================
-# Initialize Dash app
-# ============================
+    # Reading the data
+    args = parse_args()
+    data_path = Path(args.data)
 
-app = dash.Dash(__name__)
+    if not data_path.exists():
+        print(f"ERROR: File not found: {data_path}")
+        sys.exit(1)
 
-# ============================
-# Layout
-# ============================
+    df_table = pd.read_csv(data_path)
 
-app.layout = html.Div([
+    # Initialize Dash app
+    app = dash.Dash(__name__)
 
-    # Left column: Tree + Table
-    html.Div([
-        html.H2("Tree", style={'textAlign': 'center', 'padding': '10px'}),
+    # Layout
+    app.layout = html.Div([
 
-        # Okay this is running but not ideal, because it requires to run ete4 separately. We should run it from the main code and call the server.
-        # To run ete4: ete4 explore -t ../../mammal_tree.nw
-        html.Iframe(
-            src="http://127.0.0.1:5001",
-            style={
-                "width": "100%",
-                "height": "400px",
-                "border": "1px solid #ccc"
-            }
-        ),
+        # Left column: Tree + Table
+        html.Div([
+            html.H2("Tree", style={'textAlign': 'center', 'padding': '10px'}),
 
-        dash_table.DataTable(
-            id="species-table",
-            columns=[{"name": col, "id": col} for col in df_table.columns],
-            data=df_table.to_dict("records"),
-            row_selectable="multi",
-            style_cell={'textAlign': 'center'}
-        )
+            # Okay this is running but not ideal, because it requires to run ete4 separately. We should run it from the main code and call the server.
+            # To run ete4: ete4 explore -t ../../mammal_tree.nw
+            html.Iframe(
+                src="http://127.0.0.1:5001",
+                style={
+                    "width": "100%",
+                    "height": "400px",
+                    "border": "1px solid #ccc"
+                }
+            ),
 
-    ], style={
-        'width': '25%',
-        'display': 'inline-block',
-        'verticalAlign': 'top',
-        'padding': '10px',
-        'borderRight': '1px solid #ccc'
-    }),
-
-    # Right column: Scatter + Pie
-    html.Div([
-
-        # Scatter created with your custom plot function
-        dcc.Graph(
-            id='scatter-plot',
-            figure=make_scatter_plot(
-                dfr=df_scatter,
-                x="X",
-                y="Y",
-                title="Demo Scatter Plot",
-                selection=[]
+            dash_table.DataTable(
+                id="species-table",
+                columns=[{"name": col, "id": col} for col in df_table.columns],
+                data=df_table.to_dict("records"),
+                row_selectable="multi",
+                style_cell={'textAlign': 'center'}
             )
-        ),
 
-    ], style={
-        'width': '70%',
-        'display': 'inline-block',
-        'padding': '10px',
-        'verticalAlign': 'top'
-    })
+        ], style={
+            'width': '25%',
+            'display': 'inline-block',
+            'verticalAlign': 'top',
+            'padding': '10px',
+            'borderRight': '1px solid #ccc'
+        }),
 
-])
+        # Right column: Scatter + Pie
+        html.Div([
 
-# Registrem els callbacks modularment
-register_callbacks(app, df_table, df_scatter)
+            # Scatter created with your custom plot function
+            dcc.Graph(
+                id='scatter-plot',
+                figure=make_scatter_plot(
+                    dfr=df_table,
+                    x="X",
+                    y="Y",
+                    title="Demo Scatter Plot",
+                    selection=[]
+                )
+            ),
 
-# ============================
-# Run server
-# ============================
+        ], style={
+            'width': '70%',
+            'display': 'inline-block',
+            'padding': '10px',
+            'verticalAlign': 'top'
+        })
+
+    ])
+
+    # Registrem els callbacks modularment
+    register_callbacks(app, df_table, df_table)
+
+    # Run server
+    app.run(debug=True)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    main()
 

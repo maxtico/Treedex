@@ -1,6 +1,6 @@
 # callbacks.py
 from dash import Input, Output
-from components.plots import make_scatter_plot  # importing function
+from treedex.components.plots import make_scatter_plot  # importing function
 
 def register_callbacks(app, df_table, df_scatter):
 
