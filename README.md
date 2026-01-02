@@ -26,6 +26,7 @@ cd Treedex
 
 ## Create and activate a virtual environment
 conda create -n treedex python=3.12
+
 conda activate treedex
 
 ## Install Treedex in editable/development mode
