@@ -10,6 +10,36 @@ scatter plots). The content of this panel may become dynamic in the
 future (home screen, plot selector, etc.).
 """
 
+def create_home_panel(df_table):
+    """
+    Home panel with a single plot button + SVG image.
+    """
+    return html.Div(
+        children=[
+            html.H4("Select a plot to display:"),
+
+            html.Button(
+                children=[
+                    html.Img(
+                        src="/assets/scatter.svg",  # <- Path dins /assets
+                        style={'width': '200px', 'height': '150px'}
+                    ),
+                    html.Div(
+                        "Scatter Plot",
+                        style={'textAlign': 'center', 'paddingTop': '5px'}
+                    )
+                ],
+                id="scatter-btn",
+                style={
+                    'border': 'none',
+                    'background': 'transparent',
+                    'cursor': 'pointer'
+                }
+            )
+        ],
+        style={'display': 'inline-block', 'margin': '10px'}
+    )
+
 def dashboard_layout(df_table):
     """
     Create the dashboard panel layout.
@@ -38,16 +68,11 @@ def dashboard_layout(df_table):
                 style_cell={'textAlign': 'center'}
             ),
 
-            # Scatter plot (default dashboard view)
-            dcc.Graph(
-                id='scatter-plot',
-                figure=make_scatter_plot(
-                    dfr=df_table,
-                    x="X",
-                    y="Y",
-                    title="Demo Scatter Plot",
-                    selection=[]
-                )
+            html.Div(
+                id='main-plot-area',
+                children=[
+                    create_home_panel(df_table)  # al principi només el botó
+                ]
             )
         ],
         style={

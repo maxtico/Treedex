@@ -1,6 +1,6 @@
 # callbacks.py
-from dash import Input, Output
-from treedex.components.plots import make_scatter_plot  # importing function
+from dash import Input, Output, dcc
+from .components.plots import make_scatter_plot  # importing function
 
 def register_callbacks(app, df_table, df_scatter):
 
@@ -24,3 +24,26 @@ def register_callbacks(app, df_table, df_scatter):
 
         # Returning updated scatter plot with highlighted points
         return make_scatter_plot(df_scatter, x="X", y="Y", title="Demo Scatter Plot", selection=selection_idx)
+
+    # ---------------- Callback for the button click at SVG ----------------
+    @app.callback(
+        Output("main-plot-area", "children"),  # substitueix tot el div
+        Input("scatter-btn", "n_clicks")
+    )
+    def show_scatter(n_clicks):
+        """
+        Replace the home panel with the scatter plot when the SVG button is clicked.
+        """
+        if n_clicks:
+            return dcc.Graph(
+                id='scatter-plot',
+                figure=make_scatter_plot(
+                    df_scatter,
+                    x="X",
+                    y="Y",
+                    title="Demo Scatter Plot",
+                    selection=[]
+                ),
+                style={'height': 500}
+            )
+        return dash.no_update
