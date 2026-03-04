@@ -26,7 +26,6 @@ def tree_layout(f_tree):
     return html.Div(
         children=[
             html.H2(
-                "Tree",
                 style={
                     'textAlign': 'center',
                     'padding': '10px'
@@ -35,13 +34,13 @@ def tree_layout(f_tree):
 
             # Phylogenetic tree rendered as a Plotly figure
             dcc.Graph(figure=f_tree,
-            style={'height': '100%'})
+            style={'height': '85%'})
         ],
         style={
             'width': '35%',
             'display': 'inline-block',
             'verticalAlign': 'top',
-            'padding': '10px',
+            'padding': '5px',
             'borderRight': '1px solid #ccc',
             'height': '700px',
         }

@@ -1,0 +1,10 @@
+.scatter-btn {
+  border-radius: 14px;
+  transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.scatter-btn:hover {
+  background-color: #d6d6d6 !important;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
