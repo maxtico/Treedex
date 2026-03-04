@@ -2,7 +2,6 @@ from dash import dcc, html
 import plotly.express as px
 import dash_bootstrap_components as dbc
 from treedex.treedexcolors import *
-import plotly.express as px
 
 
 theme = 'plotly_white'
@@ -44,22 +43,36 @@ scatter_config = {'scrollZoom': False,  # True, False
                   }
 
 
-def make_scatter_menu(id_index): #, colnames, current_options):
+def make_scatter_menu(
+    id_index,
+    dataset_options=None,
+    dataset_value=None,
+    x_options=None,
+    x_value=None,
+    y_options=None,
+    y_value=None,
+    title_value=""
+): #, colnames, current_options):
     print('** make_scatter_menu')
 
     return dbc.Offcanvas(
         [html.P("Dropdowns for setting data input, X, Y, color, size:"),
 
          dbc.Row([dbc.Col('Title:'),
-                  dbc.Col(dcc.Input(id={'type': 'scatter_inputtext', 'index': id_index, 'property': 'title'},
-                                    placeholder='Enter title here',
-                                    #value=''),
-                                    ),
-                          width=7)],
+                  dbc.Col(
+                      dcc.Input(
+                          id={'type': 'scatter_inputtext', 'index': id_index, 'property': 'title'},
+                          placeholder='Enter title here',
+                          value=title_value
+                      ),
+                      width=7
+                  )],
                  justify='start'),
 
          dbc.Row([dbc.Col('Data:'),
                   dbc.Col(dcc.Dropdown(id={'type': 'scatter_dropdown', 'index': id_index, 'property': 'dataset'},
+                                       options=dataset_options or [],
+                                       value=dataset_value,
                                        #options=[dict(label='Lifehistory', value='Lifehistory'),
                                        #         dict(label='Load file...', value='_load_file')],
                                        #value='Lifehistory'
@@ -68,13 +81,21 @@ def make_scatter_menu(id_index): #, colnames, current_options):
                  justify='start'),
 
          dbc.Row([dbc.Col('X:'),
-                  dbc.Col(dcc.Dropdown(id={'type': 'scatter_dropdown', 'index': id_index, 'property': 'x'}, ),
+                  dbc.Col(dcc.Dropdown(
+                      id={'type': 'scatter_dropdown', 'index': id_index, 'property': 'x'},
+                      options=x_options or [],
+                      value=x_value
+                  ),
                                        #options=[{'label': c, 'value': c} for c in df_records[0].keys()],
                                        #value='logAdultWeight'),
                           width=7)],
                  justify='start'),
          dbc.Row([dbc.Col('Y:'),
-                  dbc.Col(dcc.Dropdown(id={'type': 'scatter_dropdown', 'index': id_index, 'property': 'y'},),
+                  dbc.Col(dcc.Dropdown(
+                      id={'type': 'scatter_dropdown', 'index': id_index, 'property': 'y'},
+                      options=y_options or [],
+                      value=y_value
+                  ),
                                        #options=[{'label': c, 'value': c} for c in df_records[0].keys()],
                                        #value='MaxLifespan'),
                           width=7)],

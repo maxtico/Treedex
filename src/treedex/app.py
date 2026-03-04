@@ -1,4 +1,5 @@
 import dash
+import dash_bootstrap_components as dbc
 from .layouts.main_layout import make_layout
 from .callbacks import register_callbacks
 
@@ -35,7 +36,11 @@ def create_app(df_table, f_tree):
         A fully configured Dash application instance ready to be run.
     """
     # Initialize Dash application
-    app = dash.Dash(__name__)
+    app = dash.Dash(
+        __name__,
+        external_stylesheets=[dbc.themes.BOOTSTRAP],
+        suppress_callback_exceptions=True
+    )
     # Build and assign the main layout
     app.layout = make_layout(df_table, f_tree)
     # Register all Dash callbacks (interactivity logic)
