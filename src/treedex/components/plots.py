@@ -55,73 +55,68 @@ def make_scatter_menu(
 ): #, colnames, current_options):
     print('** make_scatter_menu')
 
-    return dbc.Offcanvas(
-        [html.P("Dropdowns for setting data input, X, Y, color, size:"),
-
-         dbc.Row([dbc.Col('Title:'),
-                  dbc.Col(
-                      dcc.Input(
-                          id={'type': 'scatter_inputtext', 'index': id_index, 'property': 'title'},
-                          placeholder='Enter title here',
-                          value=title_value
-                      ),
-                      width=7
-                  )],
-                 justify='start'),
-
-         dbc.Row([dbc.Col('Data:'),
-                  dbc.Col(dcc.Dropdown(id={'type': 'scatter_dropdown', 'index': id_index, 'property': 'dataset'},
-                                       options=dataset_options or [],
-                                       value=dataset_value,
-                                       #options=[dict(label='Lifehistory', value='Lifehistory'),
-                                       #         dict(label='Load file...', value='_load_file')],
-                                       #value='Lifehistory'
-                                       ),
-                          width=7)],
-                 justify='start'),
-
-         dbc.Row([dbc.Col('X:'),
-                  dbc.Col(dcc.Dropdown(
-                      id={'type': 'scatter_dropdown', 'index': id_index, 'property': 'x'},
-                      options=x_options or [],
-                      value=x_value
-                  ),
-                                       #options=[{'label': c, 'value': c} for c in df_records[0].keys()],
-                                       #value='logAdultWeight'),
-                          width=7)],
-                 justify='start'),
-         dbc.Row([dbc.Col('Y:'),
-                  dbc.Col(dcc.Dropdown(
-                      id={'type': 'scatter_dropdown', 'index': id_index, 'property': 'y'},
-                      options=y_options or [],
-                      value=y_value
-                  ),
-                                       #options=[{'label': c, 'value': c} for c in df_records[0].keys()],
-                                       #value='MaxLifespan'),
-                          width=7)],
-                 justify='start'),
-
-         # dbc.Row([dbc.Col('Color:'),
-         #          dbc.Col(dcc.Dropdown(id={'type':'scatter_dropdown', 'index':id_index, 'property':'color'},
-         #                               options=[{'label': c, 'value': c} for c in df.columns]),
-         #                  width=7)],
-         #         justify='start'),
-         #
-         # dbc.Row([dbc.Col('Size:'),
-         #          dbc.Col(dcc.Dropdown(id={'type':'scatter_dropdown', 'index':id_index, 'property':'size'},
-         #                               options=[{'label': c, 'value': c} for c in df.columns]),
-         #                  width=7)],
-         #         justify='start'),
-         dbc.Row(dbc.Col(' ')),
-         dbc.Row(dbc.Col(
-             dbc.Button("Apply", size="sm", n_clicks=0,
-                        id={'type': 'scatter_configure_ok', 'index': id_index}),
-             class_name="g-2"))
-
-         ],
-        title="Menu: Scatter item",
-        is_open=False,
-        id={'type': 'scatter_menu', 'index': id_index}
+    return html.Div(
+        [
+            html.Div("Scatter filters", style={"fontWeight": "bold", "marginBottom": "6px"}),
+            dbc.Row(
+                [
+                    dbc.Col(
+                        [
+                            html.Label("Title", className="mb-1"),
+                            dcc.Input(
+                                id={'type': 'scatter_inputtext', 'index': id_index, 'property': 'title'},
+                                placeholder='Enter title here',
+                                value=title_value,
+                                style={"width": "100%"}
+                            ),
+                        ],
+                        md=3
+                    ),
+                    dbc.Col(
+                        [
+                            html.Label("Data", className="mb-1"),
+                            dcc.Dropdown(
+                                id={'type': 'scatter_dropdown', 'index': id_index, 'property': 'dataset'},
+                                options=dataset_options or [],
+                                value=dataset_value
+                            ),
+                        ],
+                        md=3
+                    ),
+                    dbc.Col(
+                        [
+                            html.Label("X axis", className="mb-1"),
+                            dcc.Dropdown(
+                                id={'type': 'scatter_dropdown', 'index': id_index, 'property': 'x'},
+                                options=x_options or [],
+                                value=x_value
+                            ),
+                        ],
+                        md=3
+                    ),
+                    dbc.Col(
+                        [
+                            html.Label("Y axis", className="mb-1"),
+                            dcc.Dropdown(
+                                id={'type': 'scatter_dropdown', 'index': id_index, 'property': 'y'},
+                                options=y_options or [],
+                                value=y_value
+                            ),
+                        ],
+                        md=3
+                    ),
+                ],
+                class_name="g-2"
+            ),
+        ],
+        id={'type': 'scatter_menu', 'index': id_index},
+        style={
+            "marginBottom": "12px",
+            "padding": "10px",
+            "border": "1px solid #d7e3f5",
+            "borderRadius": "10px",
+            "backgroundColor": "#f8fbff"
+        }
     )
 
 

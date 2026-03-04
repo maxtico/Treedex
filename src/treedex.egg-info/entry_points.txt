@@ -1,0 +1,2 @@
+[console_scripts]
+treedex = treedex.main:main

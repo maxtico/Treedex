@@ -1,0 +1,68 @@
+Metadata-Version: 2.4
+Name: treedex
+Version: 0.1.0
+Summary: Interactive phylogenetic data exploration dashboard
+Author-email: Max Ticó <max.tico@ub.edu>
+License: MIT
+Project-URL: Homepage, https://github.com/your-org/treedex
+Project-URL: Repository, https://github.com/your-org/treedex
+Project-URL: Documentation, https://your-docs-url
+Project-URL: Issues, https://github.com/your-org/treedex/issues
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Environment :: Console
+Classifier: Framework :: Dash
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: pandas>=2.3
+Requires-Dist: plotly>=6.5.0
+Requires-Dist: dash>=3.3.0
+Requires-Dist: dash-bootstrap-components>=2.0.4
+Requires-Dist: ete4>=4.4.0
+
+# Treedex
+
+Treedex is an interactive tool to explore evolutionary and phylogenetic data using a **Dash-based dashboard** and web visualizations.
+
+This README explains **how to install and run Treedex step by step** in development mode.
+
+---
+
+## 📦 Requirements
+
+- Python ≥ 3.12
+- Git
+- Recommended: a virtual environment (conda or venv)
+- Web browser (recommended: **Chrome** or **Firefox**)
+
+---
+
+## 🚀 Installation
+
+### Clone the repository
+
+```bash
+git clone https://github.com/maxtico/Treedex
+cd Treedex
+```
+
+## Create and activate a virtual environment
+conda create -n treedex python=3.12
+
+conda activate treedex
+
+## Install Treedex in editable/development mode
+```bash
+pip install -e .
+```
+
+## Run the tree explorer (ETE)
+```bash
+ete4 explore -t mammal_tree.nw
+```
+
+## Run Treedex
+```bash
+treedex -d species_information.csv
+```

@@ -1,6 +1,6 @@
 # callbacks.py
 import dash
-from dash import Input, Output, State, dcc, html
+from dash import Input, Output, dcc, html
 from .components.plots import make_scatter_plot, make_scatter_menu  # importing function
 
 def register_callbacks(app, df_table, df_scatter):
@@ -14,13 +14,13 @@ def register_callbacks(app, df_table, df_scatter):
     @app.callback(
         Output("scatter-plot", "figure"),
         Input("species-table", "selected_rows"),
-        Input({'type': 'scatter_configure_ok', 'index': 1}, "n_clicks"),
-        State({'type': 'scatter_dropdown', 'index': 1, 'property': 'x'}, "value"),
-        State({'type': 'scatter_dropdown', 'index': 1, 'property': 'y'}, "value"),
-        State({'type': 'scatter_inputtext', 'index': 1, 'property': 'title'}, "value"),
+        Input({'type': 'scatter_dropdown', 'index': 1, 'property': 'dataset'}, "value"),
+        Input({'type': 'scatter_dropdown', 'index': 1, 'property': 'x'}, "value"),
+        Input({'type': 'scatter_dropdown', 'index': 1, 'property': 'y'}, "value"),
+        Input({'type': 'scatter_inputtext', 'index': 1, 'property': 'title'}, "value"),
         prevent_initial_call=True
     )
-    def highlight_scatter(selected_rows, _apply_clicks, x_value, y_value, title_value):
+    def highlight_scatter(selected_rows, _dataset_value, x_value, y_value, title_value):
         """
         Highlight scatter plot points based on selected rows in the species table.
         """
@@ -53,19 +53,6 @@ def register_callbacks(app, df_table, df_scatter):
         if n_clicks:
             return html.Div(
                 children=[
-                    html.Button(
-                        "Configure Scatter",
-                        id="scatter-config-btn",
-                        className="scatter-btn",
-                        style={
-                            'marginBottom': '10px',
-                            'padding': '6px 10px',
-                            'border': '#0080ff solid 1px',
-                            'background': '#F9F9F9',
-                            'cursor': 'pointer',
-                            'fontWeight': 'bold'
-                        }
-                    ),
                     make_scatter_menu(
                         1,
                         dataset_options=[{"label": "Current Table", "value": "current_table"}],
@@ -90,18 +77,3 @@ def register_callbacks(app, df_table, df_scatter):
                 ]
             )
         return dash.no_update
-
-    @app.callback(
-        Output({'type': 'scatter_menu', 'index': 1}, "is_open"),
-        Input("scatter-config-btn", "n_clicks"),
-        Input({'type': 'scatter_configure_ok', 'index': 1}, "n_clicks"),
-        State({'type': 'scatter_menu', 'index': 1}, "is_open"),
-        prevent_initial_call=True
-    )
-    def toggle_scatter_menu(open_clicks, apply_clicks, is_open):
-        trigger_id = dash.ctx.triggered_id
-        if trigger_id == "scatter-config-btn" and open_clicks:
-            return not is_open
-        if trigger_id == {'type': 'scatter_configure_ok', 'index': 1} and apply_clicks:
-            return False
-        return is_open
