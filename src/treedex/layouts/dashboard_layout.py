@@ -16,28 +16,52 @@ def create_home_panel(df_table):
     """
     return html.Div(
         children=[
-            html.H4("Select a plot to display:"),
-
-            html.Button(
+            html.H4("Select a plot to display",
+                style={
+                    'textAlign': 'center',       # Centrat
+                    'fontSize': '24px',          # Més gran
+                    'marginBottom': '30px'       # Espai per sota
+                }),
+            html.Div(
                 children=[
-                    html.Img(
-                        src="/assets/scatter.svg",  # <- Path dins /assets
-                        style={'width': '200px', 'height': '150px'}
-                    ),
-                    html.Div(
-                        "Scatter Plot",
-                        style={'textAlign': 'center', 'paddingTop': '5px'}
+                    html.Button(
+                        children=[
+                            html.Img(
+                                src="/assets/scatter.svg",  # <- Path dins /assets
+                                style={'width': '150px', 'height': '100px'}
+                            ),
+                            html.Div(
+                                "Scatter Plot",
+                                style={
+                                    'textAlign': 'center',
+                                    'paddingTop': '2px',
+                                    'fontSize': '18px',      # Nom més gran
+                                    'fontWeight': 'bold',
+                                }
+                            )
+                        ],
+                        id="scatter-btn",
+                        className="scatter-btn",
+                        style={
+                            'border': '#0080ff solid 1px',
+                            'background': '#F9F9F9',
+                            'cursor': 'pointer',
+                            'padding': '1px 1px'
+                        }
                     )
                 ],
-                id="scatter-btn",
                 style={
-                    'border': 'none',
-                    'background': 'transparent',
-                    'cursor': 'pointer'
+                    'width': '100%',
+                    'display': 'flex',
+                    'justifyContent': 'flex-start'
                 }
             )
         ],
-        style={'display': 'inline-block', 'margin': '10px'}
+        style={
+            'width': '100%',
+            'display': 'block',
+            'margin': '10px 0'
+        }
     )
 
 def dashboard_layout(df_table):
@@ -59,6 +83,13 @@ def dashboard_layout(df_table):
     return html.Div(
         children=[
 
+            html.Div(
+                id='main-plot-area',
+                children=[
+                    create_home_panel(df_table)  # al principi només el botó
+                ],
+                style={'flex': '1 1 auto'}
+            ),
             # Species / metadata table
             dash_table.DataTable(
                 id="species-table",
@@ -66,19 +97,15 @@ def dashboard_layout(df_table):
                 data=df_table.to_dict("records"),
                 row_selectable="multi",
                 style_cell={'textAlign': 'center'}
-            ),
-
-            html.Div(
-                id='main-plot-area',
-                children=[
-                    create_home_panel(df_table)  # al principi només el botó
-                ]
             )
+
         ],
         style={
             'width': '60%',
-            'display': 'inline-block',
+            'display': 'inline-flex',
+            'flexDirection': 'column',
             'padding': '10px',
-            'verticalAlign': 'top'
+            'verticalAlign': 'top',
+            'height': '680px'
         }
     )
