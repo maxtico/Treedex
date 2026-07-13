@@ -2,7 +2,6 @@ import pandas as pd
 import argparse
 import sys
 from pathlib import Path
-import ete4.dashview.dasher  # aplica el patch
 from ete4 import PhyloTree
 from .app import create_app
 
@@ -39,15 +38,11 @@ def main():
     df_table = pd.read_csv(data_path)
     t = PhyloTree(tree_path)
 
-    # Exporting the tree
-    f_tree = t.dash(export=True)
-
     # Initialize Dash app
-    app = create_app(df_table, f_tree)
+    app = create_app(df_table, t)
 
     # Run server
     app.run(debug=True)
 
 if __name__ == '__main__':
     main()
-

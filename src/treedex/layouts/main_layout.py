@@ -1,6 +1,8 @@
-from dash import html
+from dash import dcc, html
+from ete4.dashview import DEFAULT_SHAPE, make_tree_view_config
 from .tree_layout import tree_layout
 from .dashboard_layout import dashboard_layout
+from .control_panel import top_control_panel
 
 """
 Main application layout.
@@ -9,7 +11,7 @@ This module composes the full page layout by combining the tree panel
 and the dashboard panel.
 """
 
-def make_layout(df_table, f_tree):
+def make_layout(df_table, f_tree, initial_shape=DEFAULT_SHAPE):
     """
     Build the main application layout.
 
@@ -28,7 +30,13 @@ def make_layout(df_table, f_tree):
 
     return html.Div(
         children=[
+            dcc.Store(
+                id="tree-view-config",
+                data=make_tree_view_config(initial_shape),
+            ),
+            top_control_panel(initial_shape=initial_shape),
             tree_layout(f_tree),
             dashboard_layout(df_table)
-        ]
+        ],
+        className="treedex-page",
     )

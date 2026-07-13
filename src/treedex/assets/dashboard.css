@@ -8,3 +8,210 @@
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
+
+:root {
+  /* Top drawer theme: change these values to restyle the whole panel. */
+  --top-drawer-handle-height: 38px;
+  --top-drawer-background: rgba(255, 255, 255, 0.98);
+  --top-drawer-section-background: #fbf5f8;
+  --top-drawer-text: #2f1721;
+  --top-drawer-muted-text: #765866;
+  --top-drawer-border: #e3c4d0;
+  --top-drawer-accent: #b3004b;
+  --top-drawer-accent-text: #ffffff;
+  --top-drawer-focus: rgba(179, 0, 75, 0.28);
+  --top-drawer-shadow: rgba(70, 22, 42, 0.2);
+  --top-drawer-section-radius: 10px;
+  --top-drawer-speed: 180ms;
+}
+
+.treedex-page {
+  min-height: 100vh;
+}
+
+.top-drawer {
+  position: fixed;
+  z-index: 2000;
+  top: 0;
+  left: 0;
+  width: 100%;
+  color: var(--top-drawer-text);
+  transform: translateY(calc(-100% + var(--top-drawer-handle-height)));
+  transition: transform var(--top-drawer-speed) ease-out;
+  filter: drop-shadow(0 8px 18px var(--top-drawer-shadow));
+}
+
+.top-drawer:hover,
+.top-drawer:focus-within {
+  transform: translateY(0);
+}
+
+.top-drawer__body {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 20px 24px 18px;
+  border: 1px solid var(--top-drawer-border);
+  border-top: 0;
+  background: var(--top-drawer-background);
+  backdrop-filter: blur(10px);
+}
+
+.top-drawer__heading h2,
+.top-drawer__heading p,
+.top-drawer__section h3,
+.top-drawer__section p {
+  margin: 0;
+}
+
+.top-drawer__heading h2 {
+  font-size: 1.2rem;
+}
+
+.top-drawer__heading p,
+.top-drawer__section p {
+  margin-top: 4px;
+  color: var(--top-drawer-muted-text);
+  font-size: 0.9rem;
+}
+
+.top-drawer__sections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.top-drawer__section {
+  min-height: 76px;
+  padding: 12px 14px;
+  border: 1px solid var(--top-drawer-border);
+  border-radius: var(--top-drawer-section-radius);
+  background: var(--top-drawer-section-background);
+}
+
+.top-drawer__section h3 {
+  font-size: 1rem;
+}
+
+.tree-control {
+  display: flex;
+  margin-top: 12px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.tree-control__label {
+  color: var(--top-drawer-text);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.tree-shape-options {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--top-drawer-border);
+  border-radius: 8px;
+  background: var(--top-drawer-background);
+}
+
+.tree-shape-button {
+  min-width: 112px;
+  padding: 7px 12px;
+  border: 0;
+  border-right: 1px solid var(--top-drawer-border);
+  background: transparent;
+  color: var(--top-drawer-muted-text);
+  cursor: pointer;
+  font-size: 0.86rem;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.tree-shape-button:last-child {
+  border-right: 0;
+}
+
+.tree-shape-button:hover {
+  background: var(--top-drawer-section-background);
+  color: var(--top-drawer-text);
+}
+
+.tree-shape-button.is-selected {
+  background: var(--top-drawer-accent);
+  color: var(--top-drawer-accent-text);
+}
+
+.tree-shape-button:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 3px solid var(--top-drawer-focus);
+  outline-offset: -3px;
+}
+
+.top-drawer__handle {
+  display: flex;
+  width: 132px;
+  height: var(--top-drawer-handle-height);
+  margin: -1px auto 0;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--top-drawer-accent);
+  border-top: 0;
+  border-radius: 0 0 12px 12px;
+  background: var(--top-drawer-accent);
+  color: var(--top-drawer-accent-text);
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 600;
+  outline: none;
+}
+
+.top-drawer__handle:focus-visible {
+  box-shadow: 0 0 0 3px var(--top-drawer-focus);
+}
+
+.top-drawer__arrow {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.top-drawer__arrow--open {
+  display: none;
+}
+
+.top-drawer:hover .top-drawer__arrow--closed,
+.top-drawer:focus-within .top-drawer__arrow--closed {
+  display: none;
+}
+
+.top-drawer:hover .top-drawer__arrow--open,
+.top-drawer:focus-within .top-drawer__arrow--open {
+  display: inline;
+}
+
+@media (max-width: 620px) {
+  .top-drawer__body {
+    padding: 16px;
+  }
+
+  .top-drawer__sections {
+    grid-template-columns: 1fr;
+  }
+
+  .tree-control {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .tree-shape-options,
+  .tree-shape-button {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .top-drawer {
+    transition: none;
+  }
+}

@@ -33,8 +33,12 @@ def tree_layout(f_tree):
             ),
 
             # Phylogenetic tree rendered as a Plotly figure
-            dcc.Graph(figure=f_tree,
-            style={'height': '85%'})
+            dcc.Graph(
+                id="tree-graph",
+                figure=f_tree,
+                config={"responsive": True},
+                style={'height': '85%'},
+            )
         ],
         style={
             'width': '35%',
