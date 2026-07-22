@@ -20,7 +20,8 @@ def make_scatter_plot(dfr, x, y, title, selection=[]):
                       y=y,
                       title=title,
                       template=theme,
-                      hover_name="Species").update_layout(
+                      hover_name="Species",
+                      custom_data=["Species"]).update_layout(
         # height=500, width=600,
         clickmode='event+select',
         dragmode='select',

@@ -34,6 +34,7 @@ def make_layout(df_table, f_tree, initial_shape=DEFAULT_SHAPE):
                 id="tree-view-config",
                 data=make_tree_view_config(initial_shape),
             ),
+            dcc.Store(id="selected-species", data=[]),
             top_control_panel(initial_shape=initial_shape),
             tree_layout(f_tree),
             dashboard_layout(df_table)
