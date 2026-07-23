@@ -74,6 +74,88 @@ def _tree_panel(initial_shape):
     )
 
 
+def _plot_type_label(name, asset=None, symbol=None):
+    visual = (
+        html.Img(src=asset, alt="", className="plot-type-option__image")
+        if asset
+        else html.Span(symbol, className="plot-type-option__symbol", **{"aria-hidden": "true"})
+    )
+    return html.Div(
+        [visual, html.Span(name, className="plot-type-option__name")],
+        className="plot-type-option",
+    )
+
+
+def _plots_panel():
+    """Plot selection controls; type-specific options are added later."""
+    return html.Div(
+        [
+            html.Div(
+                [
+                    html.Div(
+                        [
+                            html.Label("Current plot", htmlFor="current-plot-selector", className="plot-control__label"),
+                            dcc.Dropdown(
+                                id="current-plot-selector",
+                                options=[{"label": "plot_1", "value": "plot_1"}],
+                                value="plot_1",
+                                clearable=False,
+                                searchable=False,
+                                className="plot-control__dropdown",
+                            ),
+                        ],
+                        className="plot-control",
+                    ),
+                    html.Div(
+                        [
+                            html.Label("Plot type", htmlFor="plot-type-selector", className="plot-control__label"),
+                            dcc.Dropdown(
+                                id="plot-type-selector",
+                                options=[
+                                    {
+                                        "label": _plot_type_label(
+                                            "Scatter plot",
+                                            asset="/assets/scatter.svg",
+                                        ),
+                                        "value": "scatter",
+                                    },
+                                    {
+                                        "label": _plot_type_label("Pie chart", symbol="◔"),
+                                        "value": "pie",
+                                    },
+                                    {
+                                        "label": _plot_type_label("Violin plot", symbol="⌁"),
+                                        "value": "violin",
+                                    },
+                                ],
+                                value=None,
+                                placeholder="Select a plot type",
+                                clearable=False,
+                                searchable=False,
+                                className="plot-control__dropdown plot-type-dropdown",
+                            ),
+                        ],
+                        className="plot-control",
+                    ),
+                ],
+                className="plot-controls-column",
+            ),
+            html.Div(
+                [
+                    html.Span("Plot options", className="plot-control__label"),
+                    html.Span(
+                        "Choose a plot type to configure it",
+                        className="plot-options-placeholder",
+                    ),
+                ],
+                id="plot-options-container",
+                className="plot-control plot-control--options",
+            ),
+        ],
+        className="control-panel__content plots-panel",
+    )
+
+
 def _coming_soon_panel(title, description, action_label=None):
     children = [
         html.Div(
@@ -120,11 +202,7 @@ def top_control_panel(initial_shape=DEFAULT_SHAPE):
                             selected_className="control-tab--selected",
                         ),
                         dcc.Tab(
-                            _coming_soon_panel(
-                                "Plots",
-                                "Add and configure dashboard visualizations",
-                                "Add plot",
-                            ),
+                            _plots_panel(),
                             label="Plots",
                             value="plots",
                             className="control-tab",
