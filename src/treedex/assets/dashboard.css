@@ -156,7 +156,7 @@
 
 .control-tabs__content {
   height: 86px;
-  overflow: hidden;
+  overflow: visible;
   opacity: 0;
   pointer-events: none;
   transform: translateY(-5px);
@@ -274,6 +274,13 @@
 .plot-control__dropdown .Select-control {
   border-color: var(--control-border);
   border-radius: 9px;
+}
+
+.plot-control__dropdown .Select-menu-outer {
+  z-index: 2200;
+  border-color: var(--control-border);
+  border-radius: 0 0 9px 9px;
+  box-shadow: 0 8px 20px var(--control-shadow);
 }
 
 .plot-type-option {
@@ -447,7 +454,7 @@
   .control-tabs { height: 48px; }
   .control-tab { height: 48px; padding: 14px 14px 11px !important; }
   .control-tabs__content { height: 87px; }
-  .control-tabs__content:has(.plots-panel) { height: 240px; overflow-y: auto; }
+  .control-tabs__content:has(.plots-panel) { height: 240px; overflow: visible; }
   .control-panel__close { top: 113px; right: 14px; }
   .control-panel__content { min-height: 87px; padding: 10px 4px; gap: 14px; }
   .control-panel__heading { min-width: 0; flex: 1; }
