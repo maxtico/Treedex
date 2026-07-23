@@ -1,7 +1,6 @@
 # callbacks.py
-import dash
-from dash import Input, Output, State, ctx, dcc, html, no_update
-from .components.plots import make_scatter_plot, make_scatter_menu  # importing function
+from dash import Input, Output, State, ctx, no_update
+from .components.plots import make_scatter_plot
 
 def register_callbacks(app, df_table, df_scatter):
 
@@ -114,39 +113,17 @@ def register_callbacks(app, df_table, df_scatter):
         # Returning updated scatter plot with highlighted points
         return make_scatter_plot(df_scatter, x=x_axis, y=y_axis, title=chart_title, selection=selection_idx)
 
-    # ---------------- Callback for the button click at SVG ----------------
     @app.callback(
-        Output("main-plot-area", "children"),  # substitueix tot el div
-        Input("scatter-btn", "n_clicks")
+        Output("control-panel-tabs", "value"),
+        Output("top-control-panel", "className"),
+        Input("add-plot-btn", "n_clicks"),
+        Input("control-panel-close", "n_clicks"),
+        prevent_initial_call=True,
     )
-    def show_scatter(n_clicks):
-        """
-        Replace the home panel with the scatter plot when the SVG button is clicked.
-        """
-        if n_clicks:
-            return html.Div(
-                children=[
-                    make_scatter_menu(
-                        1,
-                        dataset_options=[{"label": "Current Table", "value": "current_table"}],
-                        dataset_value="current_table",
-                        x_options=axis_options,
-                        x_value=default_x,
-                        y_options=axis_options,
-                        y_value=default_y,
-                        title_value="Demo Scatter Plot"
-                    ),
-                    dcc.Graph(
-                        id='scatter-plot',
-                        figure=make_scatter_plot(
-                            df_scatter,
-                            x=default_x,
-                            y=default_y,
-                            title="Demo Scatter Plot",
-                            selection=[]
-                        ),
-                        style={'height': 500}
-                    )
-                ]
-            )
-        return dash.no_update
+    def toggle_plot_controls(add_clicks, close_clicks):
+        """Open plot controls from the dashboard and close them on request."""
+        if ctx.triggered_id == "add-plot-btn" and add_clicks:
+            return "plots", "control-bar is-open"
+        if ctx.triggered_id == "control-panel-close" and close_clicks:
+            return no_update, "control-bar"
+        return no_update, no_update

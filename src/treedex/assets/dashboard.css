@@ -1,14 +1,3 @@
-.scatter-btn {
-  border-radius: 14px;
-  transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-
-.scatter-btn:hover {
-  background-color: #d6d6d6 !important;
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
 :root {
   --control-bg: #ffffff;
   --control-surface: #f6f8f7;
@@ -27,6 +16,12 @@
   padding-top: 55px;
 }
 
+.treedex-workspace {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+}
+
 .control-bar {
   position: fixed;
   z-index: 2000;
@@ -41,6 +36,7 @@
 }
 
 .control-bar__inner {
+  position: relative;
   display: flex;
   max-width: 1600px;
   height: 54px;
@@ -51,7 +47,8 @@
 }
 
 .control-bar:hover .control-bar__inner,
-.control-bar:focus-within .control-bar__inner {
+.control-bar:focus-within .control-bar__inner,
+.control-bar.is-open .control-bar__inner {
   height: 140px;
 }
 
@@ -161,7 +158,8 @@
 }
 
 .control-bar:hover .control-tabs__content,
-.control-bar:focus-within .control-tabs__content {
+.control-bar:focus-within .control-tabs__content,
+.control-bar.is-open .control-tabs__content {
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
@@ -232,7 +230,7 @@
 .control-panel__placeholder-action {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 2px;
   padding: 8px 14px;
   border: 1px solid var(--control-border);
   border-radius: 9px;
@@ -253,15 +251,102 @@
   text-transform: uppercase;
 }
 
+.control-panel__close {
+  position: absolute;
+  z-index: 2;
+  top: 69px;
+  right: 28px;
+  display: none;
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+  background: var(--control-bg);
+  color: var(--control-muted);
+  cursor: pointer;
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.control-bar.is-open .control-panel__close {
+  display: flex;
+}
+
+.control-panel__close:hover {
+  border-color: var(--control-accent);
+  color: var(--control-accent-dark);
+}
+
+.control-panel__close:focus-visible {
+  outline: 3px solid var(--control-focus);
+  outline-offset: 2px;
+}
+
+.dashboard-empty-state {
+  display: flex;
+  min-height: 300px;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  box-sizing: border-box;
+}
+
+.add-plot-card {
+  display: flex;
+  width: 100%;
+  max-width: none;
+  min-height: 482px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1.5px dashed var(--control-border);
+  border-radius: 14px;
+  background: var(--control-surface);
+  color: var(--control-muted);
+  cursor: pointer;
+  font: inherit;
+  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease, transform 140ms ease;
+}
+
+.add-plot-card:hover {
+  border-color: var(--control-accent);
+  background: var(--control-accent-soft);
+  color: var(--control-accent-dark);
+  transform: translateY(-2px);
+}
+
+.add-plot-card:focus-visible {
+  outline: 3px solid var(--control-focus);
+  outline-offset: 3px;
+}
+
+.add-plot-card__icon {
+  font-size: 3.55rem;
+  font-weight: 400;
+  line-height: 0;
+}
+
+.add-plot-card__label {
+  font-size: 1.95rem;
+  font-weight: 700;
+}
+
 @media (max-width: 760px) {
   .treedex-page { padding-top: 101px; }
+  .treedex-workspace { flex-direction: column; }
+  .treedex-workspace > div { width: 100% !important; flex-basis: auto !important; }
   .control-bar__inner { height: 100px; padding: 0 14px; flex-direction: column; }
   .control-bar:hover .control-bar__inner,
-  .control-bar:focus-within .control-bar__inner { height: 187px; }
+  .control-bar:focus-within .control-bar__inner,
+  .control-bar.is-open .control-bar__inner { height: 187px; }
   .treedex-logo { width: 100%; flex-basis: 52px; padding-top: 11px; }
   .control-tabs { height: 48px; }
   .control-tab { height: 48px; padding: 14px 14px 11px !important; }
   .control-tabs__content { height: 87px; }
+  .control-panel__close { top: 113px; right: 14px; }
   .control-panel__content { min-height: 87px; padding: 10px 4px; gap: 14px; }
   .control-panel__heading { min-width: 0; flex: 1; }
   .control-panel__description { display: none; }

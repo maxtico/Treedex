@@ -42,10 +42,11 @@ def tree_layout(f_tree):
         ],
         style={
             'width': '35%',
-            'display': 'inline-block',
+            'flex': '0 0 35%',
             'verticalAlign': 'top',
             'padding': '5px',
             'borderRight': '1px solid #ccc',
             'height': '700px',
+            'boxSizing': 'border-box',
         }
     )
