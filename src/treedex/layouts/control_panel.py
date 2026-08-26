@@ -180,6 +180,42 @@ def _coming_soon_panel(title, description, action_label=None):
     return html.Div(children, className="control-panel__content")
 
 
+
+def _data_panel():
+    """Controls for uploading a replacement data table."""
+    return html.Div(
+        [
+            html.Div(
+                [
+                    html.Span("Data", className="control-panel__title"),
+                    html.Span(
+                        "Manage the data connected to this dashboard",
+                        className="control-panel__description",
+                    ),
+                ],
+                className="control-panel__heading",
+            ),
+            dcc.Upload(
+                id="upload-data",
+                children=html.Div(
+                    [
+                        html.Span("+", **{"aria-hidden": "true"}),
+                        html.Span(" Upload data"),
+                    ]
+                ),
+                multiple=False,
+                className="control-panel__placeholder-action",
+                accept=".csv,.tsv,.txt",
+            ),
+            html.Div(
+                "Accepted formats: CSV, TSV and TXT",
+                id="upload-data-status",
+                className="control-panel__description",
+            ),
+        ],
+        className="control-panel__content",
+    )
+
 def top_control_panel(initial_shape=DEFAULT_SHAPE):
     """Return the main TreeDEx navigation and contextual controls."""
     initial_shape = normalize_shape(initial_shape)
@@ -209,10 +245,7 @@ def top_control_panel(initial_shape=DEFAULT_SHAPE):
                             selected_className="control-tab--selected",
                         ),
                         dcc.Tab(
-                            _coming_soon_panel(
-                                "Data",
-                                "Manage the data connected to this dashboard",
-                            ),
+                            _data_panel(),
                             label="Data",
                             value="data",
                             className="control-tab",
