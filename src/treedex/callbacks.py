@@ -1,8 +1,99 @@
 # callbacks.py
+import base64
+import io
+
+import pandas as pd
 from dash import Input, Output, State, ctx, no_update
 from .components.plots import make_scatter_plot
 
 def register_callbacks(app, df_table, df_scatter):
+
+    @app.callback(
+        Output("species-table", "data"),
+        Output("species-table", "columns"),
+        Output("species-table", "selected_rows", allow_duplicate=True),
+        Output("selected-species", "data", allow_duplicate=True),
+        Output("upload-data-status", "children"),
+        Input("upload-data", "contents"),
+        State("upload-data", "filename"),
+        prevent_initial_call=True,
+    )
+    def upload_data(contents, filename):
+        """Parse an uploaded CSV/TSV/TXT file and replace the table contents."""
+        if not contents:
+            return no_update, no_update, no_update, no_update, no_update
+
+        try:
+            _, encoded = contents.split(",", 1)
+            decoded = base64.b64decode(encoded)
+            text = decoded.decode("utf-8-sig")
+
+            lower_name = (filename or "").lower()
+            if lower_name.endswith(".tsv"):
+                uploaded_df = pd.read_csv(io.StringIO(text), sep="\\t")
+            elif lower_name.endswith(".csv"):
+                uploaded_df = pd.read_csv(io.StringIO(text))
+            elif lower_name.endswith(".txt"):
+                uploaded_df = pd.read_csv(io.StringIO(text), sep=None, engine="python")
+            else:
+                return (
+                    no_update,
+                    no_update,
+                    no_update,
+                    no_update,
+                    "Unsupported file type. Please upload CSV, TSV or TXT.",
+                )
+
+            uploaded_df.columns = [str(col).strip() for col in uploaded_df.columns]
+
+            if uploaded_df.empty:
+                return (
+                    no_update,
+                    no_update,
+                    no_update,
+                    no_update,
+                    "The uploaded file contains no rows.",
+                )
+
+            if "Species" not in uploaded_df.columns:
+                return (
+                    no_update,
+                    no_update,
+                    no_update,
+                    no_update,
+                    "The uploaded file must contain a 'Species' column.",
+                )
+
+            columns = [
+                {"name": str(col), "id": str(col)}
+                for col in uploaded_df.columns
+            ]
+
+            return (
+                uploaded_df.to_dict("records"),
+                columns,
+                [],
+                [],
+                f"Loaded {filename}: {len(uploaded_df)} rows × {len(uploaded_df.columns)} columns.",
+            )
+
+        except UnicodeDecodeError:
+            return (
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                "Could not read the file as UTF-8 text.",
+            )
+        except Exception as exc:
+            return (
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                f"Could not load {filename or 'the file'}: {exc}",
+            )
+
 
     numeric_cols = df_scatter.select_dtypes(include="number").columns.tolist()
     default_x = "X" if "X" in df_scatter.columns else (numeric_cols[0] if numeric_cols else None)
@@ -10,9 +101,7 @@ def register_callbacks(app, df_table, df_scatter):
 
     axis_options = [{"label": col, "value": col} for col in numeric_cols]
 
-    species = df_table["Species"].astype(str).tolist()
-
-    def canonical_species(names):
+    def canonical_species(names, species):
         """Return valid table species, preserving table order."""
         requested = {
             str(name).casefold()
@@ -32,11 +121,19 @@ def register_callbacks(app, df_table, df_scatter):
         Input("scatter-plot", "clickData"),
         Input("species-table", "selected_rows"),
         State("selected-species", "data"),
+        State("species-table", "data"),
         prevent_initial_call=True,
     )
-    def synchronize_selection(tree_click, scatter_click, selected_rows, current):
+    def synchronize_selection(tree_click, scatter_click, selected_rows, current, table_data):
         """Keep tree, scatter and table selections in one shared state."""
         trigger = ctx.triggered_id
+
+        current_table = table_data or []
+        species = [
+            str(row.get("Species"))
+            for row in current_table
+            if row.get("Species") is not None
+        ]
 
         if trigger == "species-table":
             selected = [
@@ -44,8 +141,8 @@ def register_callbacks(app, df_table, df_scatter):
                 for index in (selected_rows or [])
                 if 0 <= index < len(species)
             ]
-            selected = canonical_species(selected)
-            if selected == canonical_species(current):
+            selected = canonical_species(selected, species)
+            if selected == canonical_species(current, species):
                 return no_update, no_update
             return selected, no_update
 
@@ -57,7 +154,7 @@ def register_callbacks(app, df_table, df_scatter):
                 if isinstance(customdata, (list, tuple)) and customdata
                 else point.get("hovertext") or point.get("text")
             )
-            selected = canonical_species([clicked_name])
+            selected = canonical_species([clicked_name], species)
 
         elif trigger == "tree-graph":
             point = (tree_click or {}).get("points", [{}])[0]
@@ -65,7 +162,8 @@ def register_callbacks(app, df_table, df_scatter):
             if not isinstance(node, dict):
                 return no_update, no_update
             selected = canonical_species(
-                node.get("leaf_names") or [node.get("name")]
+                node.get("leaf_names") or [node.get("name")],
+                species,
             )
         else:
             return no_update, no_update
