@@ -55,7 +55,7 @@
 .control-bar:has(.plots-panel):hover .control-bar__inner,
 .control-bar:has(.plots-panel):focus-within .control-bar__inner,
 .control-bar.is-open:has(.plots-panel) .control-bar__inner {
-  height: 218px;
+  height: 238px;
 }
 
 .treedex-logo {
@@ -164,7 +164,7 @@
 }
 
 .control-tabs__content:has(.plots-panel) {
-  height: 164px;
+  height: 184px;
 }
 
 .control-bar:hover .control-tabs__content,
@@ -238,7 +238,7 @@
 .tree-shape-button.is-selected { background: var(--control-accent); color: #ffffff; }
 
 .plots-panel {
-  min-height: 164px;
+  min-height: 184px;
   align-items: stretch;
   gap: 24px;
   padding-top: 16px;
@@ -319,8 +319,8 @@
 }
 
 .plot-control--options {
-  max-width: 760px;
-  flex: 1 1 540px;
+  max-width: 900px;
+  flex: 1 1 680px;
 }
 
 .plot-options-placeholder {
@@ -338,9 +338,17 @@
 
 .scatter-options {
   display: grid;
-  grid-template-columns: 130px 130px minmax(170px, 1fr) auto;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
   align-items: end;
   gap: 10px;
+}
+
+.scatter-option--title {
+  grid-column: span 2;
+}
+
+.build-plot-button {
+  justify-self: end;
 }
 
 .scatter-option {
@@ -535,19 +543,19 @@
   .control-bar.is-open .control-bar__inner { height: 187px; }
   .control-bar:has(.plots-panel):hover .control-bar__inner,
   .control-bar:has(.plots-panel):focus-within .control-bar__inner,
-  .control-bar.is-open:has(.plots-panel) .control-bar__inner { height: 340px; }
+  .control-bar.is-open:has(.plots-panel) .control-bar__inner { height: 430px; }
   .treedex-logo { width: 100%; flex-basis: 52px; padding-top: 11px; }
   .control-tabs { height: 48px; }
   .control-tab { height: 48px; padding: 14px 14px 11px !important; }
   .control-tabs__content { height: 87px; }
-  .control-tabs__content:has(.plots-panel) { height: 240px; overflow: visible; }
+  .control-tabs__content:has(.plots-panel) { height: 330px; overflow: visible; }
   .control-panel__close { top: 113px; right: 14px; }
   .control-panel__content { min-height: 87px; padding: 10px 4px; gap: 14px; }
   .control-panel__heading { min-width: 0; flex: 1; }
   .control-panel__description { display: none; }
   .tree-control { gap: 8px; }
   .tree-shape-button { min-width: 82px; padding: 7px 9px; }
-  .plots-panel { min-height: 240px; flex-wrap: wrap; gap: 12px; }
+  .plots-panel { min-height: 330px; flex-wrap: wrap; gap: 12px; }
   .plot-controls-column { width: 240px; flex-basis: 240px; }
   .plot-control--options { flex: 1; }
   .scatter-options { grid-template-columns: repeat(2, minmax(130px, 1fr)); }

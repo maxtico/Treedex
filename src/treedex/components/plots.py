@@ -12,12 +12,23 @@ testindex = 0
 ########################################
 #### scatter plot
 
-def make_scatter_plot(dfr, x, y, title, selection=[]):
-    # global testindex
-    # testindex+=1
-    return px.scatter(data_frame=dfr,
+def make_scatter_plot(
+    dfr,
+    x,
+    y,
+    title,
+    selection=None,
+    color=None,
+    size=None,
+    text=None,
+):
+    figure = px.scatter(data_frame=dfr,
                       x=x,
                       y=y,
+                      color=color,
+                      size=size,
+                      text=text,
+                      size_max=28,
                       title=title,
                       template=theme,
                       hover_name="Species",
@@ -27,12 +38,30 @@ def make_scatter_plot(dfr, x, y, title, selection=[]):
         dragmode='select',
         uirevision=True,
         selectionrevision=False,
-    ).update_traces(selectedpoints=selection,
-                    marker_size=14,
-                    unselected_marker={'opacity': 0.4,
-                                       'color': '#999999'},
-                    selected_marker={'opacity': 0.95,
-                                     'color': sel_color})
+    )
+
+    selected_names = {
+        str(dfr.iloc[index]["Species"]).casefold()
+        for index in (selection or [])
+        if 0 <= index < len(dfr)
+    }
+    for trace in figure.data:
+        if size is None:
+            trace.update(marker_size=14)
+        if selected_names:
+            trace_customdata = trace.customdata if trace.customdata is not None else []
+            trace_selection = [
+                index
+                for index, customdata in enumerate(trace_customdata)
+                if customdata and str(customdata[0]).casefold() in selected_names
+            ]
+            trace.update(
+                selectedpoints=trace_selection,
+                unselected_marker={'opacity': 0.4, 'color': '#999999'},
+                selected_marker={'opacity': 0.95, 'color': sel_color},
+            )
+
+    return figure
 
 
 scatter_config = {'scrollZoom': False,  # True, False

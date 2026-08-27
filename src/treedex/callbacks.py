@@ -203,7 +203,7 @@ def register_callbacks(app, df_table, df_scatter):
                 html.Span(message, className="plot-options-placeholder"),
             ]
 
-        _, numeric_cols, default_x, default_y = scatter_columns(table_data)
+        current_df, numeric_cols, default_x, default_y = scatter_columns(table_data)
         if not numeric_cols:
             return [
                 label,
@@ -214,6 +214,27 @@ def register_callbacks(app, df_table, df_scatter):
             ]
 
         axis_options = [{"label": col, "value": col} for col in numeric_cols]
+        column_options = [
+            {"label": str(col), "value": col}
+            for col in current_df.columns
+        ]
+        size_columns = []
+        for col in numeric_cols:
+            values = pd.to_numeric(current_df[col], errors="coerce").dropna()
+            if not values.empty and values.ge(0).all() and values.gt(0).any():
+                size_columns.append(col)
+        size_options = [{"label": col, "value": col} for col in size_columns]
+
+        def optional_dropdown(component_id, options):
+            return dcc.Dropdown(
+                id=component_id,
+                options=options,
+                value=None,
+                placeholder="None",
+                clearable=True,
+                className="scatter-option__dropdown",
+            )
+
         return [
             label,
             html.Div(
@@ -243,6 +264,27 @@ def register_callbacks(app, df_table, df_scatter):
                             ),
                         ],
                         className="scatter-option",
+                    ),
+                    html.Div(
+                        [
+                            html.Label("Color by", htmlFor="scatter-color-by"),
+                            optional_dropdown("scatter-color-by", column_options),
+                        ],
+                        className="scatter-option",
+                    ),
+                    html.Div(
+                        [
+                            html.Label("Size by", htmlFor="scatter-size-by"),
+                            optional_dropdown("scatter-size-by", size_options),
+                        ],
+                        className="scatter-option",
+                    ),
+                    html.Div(
+                        [
+                            html.Label("Text", htmlFor="scatter-text-by"),
+                            optional_dropdown("scatter-text-by", column_options),
+                        ],
+                        className="scatter-option scatter-option--text",
                     ),
                     html.Div(
                         [
@@ -276,10 +318,23 @@ def register_callbacks(app, df_table, df_scatter):
         State("scatter-x-axis", "value", allow_optional=True),
         State("scatter-y-axis", "value", allow_optional=True),
         State("scatter-plot-title", "value", allow_optional=True),
+        State("scatter-color-by", "value", allow_optional=True),
+        State("scatter-size-by", "value", allow_optional=True),
+        State("scatter-text-by", "value", allow_optional=True),
         State("species-table", "data"),
         prevent_initial_call=True,
     )
-    def build_scatter_plot(n_clicks, selected_species, x_value, y_value, title_value, table_data):
+    def build_scatter_plot(
+        n_clicks,
+        selected_species,
+        x_value,
+        y_value,
+        title_value,
+        color_value,
+        size_value,
+        text_value,
+        table_data,
+    ):
         """Build the configured scatter plot and keep its selection highlighted."""
         if not n_clicks:
             return no_update
@@ -287,6 +342,9 @@ def register_callbacks(app, df_table, df_scatter):
         current_df, _, default_x, default_y = scatter_columns(table_data)
         x_axis = x_value if x_value in current_df.columns else default_x
         y_axis = y_value if y_value in current_df.columns else default_y
+        color_column = color_value if color_value in current_df.columns else None
+        size_column = size_value if size_value in current_df.columns else None
+        text_column = text_value if text_value in current_df.columns else None
         if x_axis is None or y_axis is None:
             return no_update
 
@@ -304,6 +362,9 @@ def register_callbacks(app, df_table, df_scatter):
             y=y_axis,
             title=title_value or "Scatter plot",
             selection=selection_idx,
+            color=color_column,
+            size=size_column,
+            text=text_column,
         )
         return html.Div(
             dcc.Graph(
