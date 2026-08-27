@@ -120,7 +120,10 @@ def _plots_panel():
                                         "value": "scatter",
                                     },
                                     {
-                                        "label": _plot_type_label("Pie chart", symbol="◔"),
+                                        "label": _plot_type_label(
+                                            "Pie chart",
+                                            asset="/assets/piechart.svg",
+                                        ),
                                         "value": "pie",
                                     },
                                     {

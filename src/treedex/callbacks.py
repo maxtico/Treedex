@@ -3,8 +3,8 @@ import base64
 import io
 
 import pandas as pd
-from dash import Input, Output, State, ctx, no_update
-from .components.plots import make_scatter_plot
+from dash import Input, Output, State, ctx, dcc, html, no_update
+from .components.plots import make_scatter_plot, scatter_config
 
 def register_callbacks(app, df_table, df_scatter):
 
@@ -95,11 +95,15 @@ def register_callbacks(app, df_table, df_scatter):
             )
 
 
-    numeric_cols = df_scatter.select_dtypes(include="number").columns.tolist()
-    default_x = "X" if "X" in df_scatter.columns else (numeric_cols[0] if numeric_cols else None)
-    default_y = "Y" if "Y" in df_scatter.columns else (numeric_cols[1] if len(numeric_cols) > 1 else default_x)
-
-    axis_options = [{"label": col, "value": col} for col in numeric_cols]
+    def scatter_columns(table_data):
+        """Return the current data frame and sensible numeric axis defaults."""
+        current_df = pd.DataFrame(table_data) if table_data else df_scatter.copy()
+        numeric_cols = current_df.select_dtypes(include="number").columns.tolist()
+        default_x = "X" if "X" in numeric_cols else (numeric_cols[0] if numeric_cols else None)
+        default_y = "Y" if "Y" in numeric_cols else (
+            numeric_cols[1] if len(numeric_cols) > 1 else default_x
+        )
+        return current_df, numeric_cols, default_x, default_y
 
     def canonical_species(names, species):
         """Return valid table species, preserving table order."""
@@ -118,7 +122,7 @@ def register_callbacks(app, df_table, df_scatter):
         Output("selected-species", "data"),
         Output("species-table", "selected_rows"),
         Input("tree-graph", "clickData"),
-        Input("scatter-plot", "clickData"),
+        Input("scatter-plot", "clickData", allow_optional=True),
         Input("species-table", "selected_rows"),
         State("selected-species", "data"),
         State("species-table", "data"),
@@ -180,41 +184,141 @@ def register_callbacks(app, df_table, df_scatter):
         return selected, rows
 
     @app.callback(
-        Output("scatter-plot", "figure"),
-        Input("selected-species", "data"),
-        Input({'type': 'scatter_dropdown', 'index': 1, 'property': 'dataset'}, "value"),
-        Input({'type': 'scatter_dropdown', 'index': 1, 'property': 'x'}, "value"),
-        Input({'type': 'scatter_dropdown', 'index': 1, 'property': 'y'}, "value"),
-        Input({'type': 'scatter_inputtext', 'index': 1, 'property': 'title'}, "value"),
-        prevent_initial_call=True
+        Output("plot-options-container", "children"),
+        Input("plot-type-selector", "value"),
+        Input("species-table", "data"),
     )
-    def highlight_scatter(selected_species, _dataset_value, x_value, y_value, title_value):
-        """
-        Highlight scatter plot points based on selected rows in the species table.
-        """
-        x_axis = x_value if x_value in df_scatter.columns else default_x
-        y_axis = y_value if y_value in df_scatter.columns else default_y
-        chart_title = title_value if title_value else "Demo Scatter Plot"
+    def show_plot_options(plot_type, table_data):
+        """Render controls for the plot type selected by the user."""
+        label = html.Span("Plot options", className="plot-control__label")
 
-        if not selected_species:
-            # No row selected, return default scatter plot
-            return make_scatter_plot(df_scatter, x=x_axis, y=y_axis, title=chart_title, selection=[])
+        if plot_type != "scatter":
+            message = (
+                "Choose a plot type to configure it"
+                if not plot_type
+                else "Options for this plot type are coming soon"
+            )
+            return [
+                label,
+                html.Span(message, className="plot-options-placeholder"),
+            ]
 
-        # Mapping indexes of selected species in the scatter dataframe
-        selected_lookup = {str(name).casefold() for name in selected_species}
-        selection_idx = [
-            i
-            for i, name in enumerate(df_scatter["Species"])
-            if str(name).casefold() in selected_lookup
+        _, numeric_cols, default_x, default_y = scatter_columns(table_data)
+        if not numeric_cols:
+            return [
+                label,
+                html.Span(
+                    "The current data needs at least one numeric column.",
+                    className="plot-options-placeholder",
+                ),
+            ]
+
+        axis_options = [{"label": col, "value": col} for col in numeric_cols]
+        return [
+            label,
+            html.Div(
+                [
+                    html.Div(
+                        [
+                            html.Label("X axis", htmlFor="scatter-x-axis"),
+                            dcc.Dropdown(
+                                id="scatter-x-axis",
+                                options=axis_options,
+                                value=default_x,
+                                clearable=False,
+                                className="scatter-option__dropdown",
+                            ),
+                        ],
+                        className="scatter-option",
+                    ),
+                    html.Div(
+                        [
+                            html.Label("Y axis", htmlFor="scatter-y-axis"),
+                            dcc.Dropdown(
+                                id="scatter-y-axis",
+                                options=axis_options,
+                                value=default_y,
+                                clearable=False,
+                                className="scatter-option__dropdown",
+                            ),
+                        ],
+                        className="scatter-option",
+                    ),
+                    html.Div(
+                        [
+                            html.Label("Plot title", htmlFor="scatter-plot-title"),
+                            dcc.Input(
+                                id="scatter-plot-title",
+                                type="text",
+                                value="Scatter plot",
+                                placeholder="Enter a title",
+                                className="scatter-option__input",
+                            ),
+                        ],
+                        className="scatter-option scatter-option--title",
+                    ),
+                    html.Button(
+                        "Build plot",
+                        id="build-scatter-plot",
+                        n_clicks=0,
+                        type="button",
+                        className="build-plot-button",
+                    ),
+                ],
+                className="scatter-options",
+            ),
         ]
 
-        # Returning updated scatter plot with highlighted points
-        return make_scatter_plot(df_scatter, x=x_axis, y=y_axis, title=chart_title, selection=selection_idx)
+    @app.callback(
+        Output("main-plot-area", "children"),
+        Input("build-scatter-plot", "n_clicks", allow_optional=True),
+        Input("selected-species", "data"),
+        State("scatter-x-axis", "value", allow_optional=True),
+        State("scatter-y-axis", "value", allow_optional=True),
+        State("scatter-plot-title", "value", allow_optional=True),
+        State("species-table", "data"),
+        prevent_initial_call=True,
+    )
+    def build_scatter_plot(n_clicks, selected_species, x_value, y_value, title_value, table_data):
+        """Build the configured scatter plot and keep its selection highlighted."""
+        if not n_clicks:
+            return no_update
+
+        current_df, _, default_x, default_y = scatter_columns(table_data)
+        x_axis = x_value if x_value in current_df.columns else default_x
+        y_axis = y_value if y_value in current_df.columns else default_y
+        if x_axis is None or y_axis is None:
+            return no_update
+
+        selected_lookup = {
+            str(name).casefold() for name in (selected_species or [])
+        }
+        selection_idx = [
+            index
+            for index, name in enumerate(current_df["Species"])
+            if str(name).casefold() in selected_lookup
+        ]
+        figure = make_scatter_plot(
+            current_df,
+            x=x_axis,
+            y=y_axis,
+            title=title_value or "Scatter plot",
+            selection=selection_idx,
+        )
+        return html.Div(
+            dcc.Graph(
+                id="scatter-plot",
+                figure=figure,
+                config={**scatter_config, "responsive": True},
+                className="dashboard-scatter-plot",
+            ),
+            className="dashboard-plot-card",
+        )
 
     @app.callback(
         Output("control-panel-tabs", "value"),
         Output("top-control-panel", "className"),
-        Input("add-plot-btn", "n_clicks"),
+        Input("add-plot-btn", "n_clicks", allow_optional=True),
         Input("control-panel-close", "n_clicks"),
         prevent_initial_call=True,
     )
