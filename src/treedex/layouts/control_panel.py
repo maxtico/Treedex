@@ -168,7 +168,7 @@ def _plots_panel():
                 className="plot-control plot-control--options",
             ),
         ],
-        className="control-panel__content plots-panel",
+        className="control-panel__content plots-panel plots-panel--dropdown-overflow",
     )
 
 
