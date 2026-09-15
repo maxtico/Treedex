@@ -285,8 +285,8 @@
 
 .plot-type-option {
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr);
-  min-height: 30px;
+  grid-template-columns: 42px minmax(0, 1fr);
+  min-height: 36px;
   align-items: center;
   column-gap: 9px;
   padding: 0px 0;
@@ -294,8 +294,8 @@
 }
 
 .plot-type-option__image {
-  width: 30px;
-  height: 22px;
+  width: 40px;
+  height: 32px;
   object-fit: contain;
   justify-self: center;
   align-self: center;
@@ -323,6 +323,14 @@
   flex: 1 1 680px;
 }
 
+.plot-options-content {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+}
+
 .plot-options-placeholder {
   display: flex;
   min-height: 96px;
@@ -337,18 +345,58 @@
 }
 
 .scatter-options {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(120px, 1fr));
-  align-items: end;
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
   gap: 10px;
 }
 
-.scatter-option--title {
-  grid-column: span 2;
+.scatter-options-header {
+  display: flex;
+  min-height: 24px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.build-plot-button {
-  justify-self: end;
+.scatter-pages {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--control-border);
+  border-radius: 7px;
+}
+
+.scatter-options-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scatter-page-button {
+  width: 28px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-right: 1px solid var(--control-border);
+  background: var(--control-bg);
+  color: var(--control-muted);
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.scatter-page-button:last-child { border-right: 0; }
+.scatter-page-button:hover { background: var(--control-accent-soft); color: var(--control-accent-dark); }
+.scatter-page-button.is-active { background: var(--control-accent); color: #fff; }
+.scatter-page-button:focus-visible { position: relative; z-index: 1; outline: 3px solid var(--control-focus); outline-offset: -2px; }
+
+.scatter-options-page {
+  display: grid;
+  min-height: 0;
+  grid-template-columns: repeat(6, minmax(100px, 1fr));
+  align-items: end;
+  gap: 8px 10px;
 }
 
 .scatter-option {
@@ -392,7 +440,8 @@
 }
 
 .build-plot-button {
-  height: 36px;
+  align-self: flex-end;
+  height: 28px;
   padding: 0 16px;
   border: 1px solid var(--control-accent);
   border-radius: 8px;
@@ -403,6 +452,16 @@
   font-weight: 700;
   white-space: nowrap;
 }
+
+.scatter-validation-message {
+  min-height: 16px;
+  color: #b42318;
+  font-size: 0.7rem;
+  line-height: 1.2;
+}
+
+.scatter-validation-message:empty { display: none; }
+.scatter-validation-message ul { margin: 0; padding-left: 18px; }
 
 .build-plot-button:hover {
   border-color: var(--control-accent-dark);
@@ -558,9 +617,13 @@
   .plots-panel { min-height: 330px; flex-wrap: wrap; gap: 12px; }
   .plot-controls-column { width: 240px; flex-basis: 240px; }
   .plot-control--options { flex: 1; }
-  .scatter-options { grid-template-columns: repeat(2, minmax(130px, 1fr)); }
-  .scatter-option--title { grid-column: 1; }
-  .build-plot-button { grid-column: 2; justify-self: end; }
+  .scatter-options-page {
+    max-height: 220px;
+    grid-template-columns: repeat(2, minmax(130px, 1fr));
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .build-plot-button { align-self: flex-end; }
 }
 
 @media (max-width: 470px) {

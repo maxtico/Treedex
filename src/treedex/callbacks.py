@@ -3,8 +3,9 @@ import base64
 import io
 
 import pandas as pd
-from dash import Input, Output, State, ctx, dcc, html, no_update
+from dash import ALL, Input, Output, State, ctx, dcc, html, no_update
 from .components.plots import make_scatter_plot, scatter_config
+from .scatter_options import normalize_scatter_options, validate_scatter_options
 
 def register_callbacks(app, df_table, df_scatter):
 
@@ -184,11 +185,14 @@ def register_callbacks(app, df_table, df_scatter):
         return selected, rows
 
     @app.callback(
-        Output("plot-options-container", "children"),
+        Output("plot-options-content", "children"),
+        Output("scatter-options-store", "data"),
         Input("plot-type-selector", "value"),
         Input("species-table", "data"),
+        Input("scatter-options-page", "data"),
+        State("scatter-options-store", "data"),
     )
-    def show_plot_options(plot_type, table_data):
+    def show_plot_options(plot_type, table_data, active_page, stored_options):
         """Render controls for the plot type selected by the user."""
         label = html.Span("Plot options", className="plot-control__label")
 
@@ -201,7 +205,7 @@ def register_callbacks(app, df_table, df_scatter):
             return [
                 label,
                 html.Span(message, className="plot-options-placeholder"),
-            ]
+            ], stored_options
 
         current_df, numeric_cols, default_x, default_y = scatter_columns(table_data)
         if not numeric_cols:
@@ -211,13 +215,12 @@ def register_callbacks(app, df_table, df_scatter):
                     "The current data needs at least one numeric column.",
                     className="plot-options-placeholder",
                 ),
-            ]
+            ], stored_options
 
-        axis_options = [{"label": col, "value": col} for col in numeric_cols]
-        column_options = [
-            {"label": str(col), "value": col}
-            for col in current_df.columns
-        ]
+        options = normalize_scatter_options(stored_options, current_df)
+        active_page = active_page if active_page in (1, 2, 3, 4) else 1
+        axis_options = [{"label": str(col), "value": col} for col in numeric_cols]
+        column_options = [{"label": str(col), "value": col} for col in current_df.columns]
         size_columns = []
         for col in numeric_cols:
             values = pd.to_numeric(current_df[col], errors="coerce").dropna()
@@ -225,128 +228,195 @@ def register_callbacks(app, df_table, df_scatter):
                 size_columns.append(col)
         size_options = [{"label": col, "value": col} for col in size_columns]
 
-        def optional_dropdown(component_id, options):
+        def control_id(name):
+            return {"type": "scatter-option", "name": name}
+
+        def dropdown(name, choices, clearable=True, multi=False, placeholder="None"):
             return dcc.Dropdown(
-                id=component_id,
-                options=options,
-                value=None,
-                placeholder="None",
-                clearable=True,
+                id=control_id(name), options=choices, value=options.get(name),
+                placeholder=placeholder, clearable=clearable, multi=multi,
                 className="scatter-option__dropdown",
             )
 
+        def number(name, placeholder=None, **kwargs):
+            return dcc.Input(
+                id=control_id(name), type="number", value=options.get(name),
+                placeholder=placeholder, className="scatter-option__input", **kwargs,
+            )
+
+        def text_input(name, placeholder=None, input_type="text"):
+            return dcc.Input(
+                id=control_id(name), type=input_type, value=options.get(name),
+                placeholder=placeholder, className="scatter-option__input",
+            )
+
+        def field(label_text, name, component):
+            return html.Div(
+                [html.Label(label_text), component],
+                className="scatter-option",
+            )
+
+        none_choice = [{"label": "None", "value": ""}]
+        marginal_choices = none_choice + [
+            {"label": value.title(), "value": value}
+            for value in ("rug", "box", "violin", "histogram")
+        ]
+        boolean_choices = [
+            {"label": "Off", "value": False}, {"label": "On", "value": True}
+        ]
+        if active_page == 1:
+            page_fields = [
+                field("X axis", "x", dropdown("x", axis_options, clearable=False)),
+                field("Y axis", "y", dropdown("y", axis_options, clearable=False)),
+                field("Color by", "color", dropdown("color", column_options)),
+                field("Symbol by", "symbol", dropdown("symbol", column_options)),
+                field("Size by", "size", dropdown("size", size_options)),
+                field("Text labels", "text", dropdown("text", column_options)),
+                field("Hover title", "hover_name", dropdown("hover_name", column_options)),
+                field("Extra hover data", "hover_data", dropdown(
+                    "hover_data", column_options, multi=True, placeholder="Select columns"
+                )),
+                field("Title", "title", text_input("title", "Scatter plot")),
+                field("Subtitle", "subtitle", text_input("subtitle", "Optional subtitle")),
+                field("Template", "template", dropdown("template", [{"label": name, "value": name} for name in ("plotly_white", "plotly", "plotly_dark", "ggplot2", "seaborn", "simple_white", "none")], clearable=False)),
+            ]
+        elif active_page == 2:
+            page_fields = [
+                field("Facet rows", "facet_row", dropdown("facet_row", column_options)),
+                field("Facet columns", "facet_col", dropdown("facet_col", column_options)),
+                field("Facet column wrap", "facet_col_wrap", number("facet_col_wrap", min=0, step=1)),
+                field("Row spacing", "facet_row_spacing", number("facet_row_spacing", min=0, max=1, step=0.01)),
+                field("Column spacing", "facet_col_spacing", number("facet_col_spacing", min=0, max=1, step=0.01)),
+                field("X error +", "error_x", dropdown("error_x", size_options)),
+                field("X error −", "error_x_minus", dropdown("error_x_minus", size_options)),
+                field("Y error +", "error_y", dropdown("error_y", size_options)),
+                field("Y error −", "error_y_minus", dropdown("error_y_minus", size_options)),
+                field("Animation frame", "animation_frame", dropdown("animation_frame", column_options)),
+                field("Animation group", "animation_group", dropdown("animation_group", column_options)),
+            ]
+        elif active_page == 3:
+            page_fields = [
+                field("Opacity", "opacity", number("opacity", min=0, max=1, step=0.05)),
+                field("Maximum size", "size_max", number("size_max", min=1, step=1)),
+                field("Discrete palette", "color_discrete_palette", dropdown(
+                    "color_discrete_palette",
+                    [{"label": name, "value": name} for name in ("Plotly", "D3", "G10", "T10", "Alphabet", "Dark24", "Light24")],
+                    clearable=False,
+                )),
+                field("Continuous scale", "color_continuous_scale", dropdown(
+                    "color_continuous_scale",
+                    [{"label": name, "value": name} for name in ("Viridis", "Plasma", "Inferno", "Magma", "Cividis", "Turbo", "RdBu", "Spectral")],
+                    clearable=False,
+                )),
+                field("Color minimum", "range_color_min", number("range_color_min")),
+                field("Color maximum", "range_color_max", number("range_color_max")),
+                field("Color midpoint", "color_continuous_midpoint", number("color_continuous_midpoint")),
+                field("X marginal", "marginal_x", dropdown("marginal_x", marginal_choices)),
+                field("Y marginal", "marginal_y", dropdown("marginal_y", marginal_choices)),
+                field("Render mode", "render_mode", dropdown(
+                    "render_mode", [{"label": value.upper() if value != "auto" else "Auto", "value": value} for value in ("auto", "svg", "webgl")], clearable=False
+                )),
+            ]
+        else:
+            try:
+                import statsmodels  # noqa: F401
+                trendline_choices = none_choice + [
+                    {"label": "OLS", "value": "ols"}, {"label": "LOWESS", "value": "lowess"}
+                ]
+            except ImportError:
+                trendline_choices = none_choice
+            page_fields = [
+                field("Log X", "log_x", dropdown("log_x", boolean_choices, clearable=False)),
+                field("Log Y", "log_y", dropdown("log_y", boolean_choices, clearable=False)),
+                field("X minimum", "range_x_min", number("range_x_min")),
+                field("X maximum", "range_x_max", number("range_x_max")),
+                field("Y minimum", "range_y_min", number("range_y_min")),
+                field("Y maximum", "range_y_max", number("range_y_max")),
+                field("Orientation", "orientation", dropdown("orientation", none_choice + [{"label": "Vertical", "value": "v"}, {"label": "Horizontal", "value": "h"}])),
+                field("Trendline", "trendline", dropdown("trendline", trendline_choices)),
+                field("Trendline scope", "trendline_scope", dropdown("trendline_scope", [{"label": "Per trace", "value": "trace"}, {"label": "Overall", "value": "overall"}], clearable=False)),
+                field("Trendline color", "trendline_color_override", text_input("trendline_color_override", "CSS color")),
+            ]
+
         return [
-            label,
+            html.Div(
+                [label, html.Div([
+                    html.Div([
+                        html.Button(
+                            str(page), id={"type": "scatter-page-button", "page": page},
+                            n_clicks=0, type="button",
+                            className="scatter-page-button" + (" is-active" if page == active_page else ""),
+                            **{"aria-label": f"Scatter options page {page}", "aria-pressed": str(page == active_page).lower()},
+                        ) for page in range(1, 5)
+                    ], className="scatter-pages", role="group", **{"aria-label": "Scatter option pages"}),
+                    html.Button(
+                        "Build plot", id="build-scatter-plot", n_clicks=0,
+                        type="button", className="build-plot-button",
+                    ),
+                ], className="scatter-options-actions")],
+                className="scatter-options-header",
+            ),
             html.Div(
                 [
-                    html.Div(
-                        [
-                            html.Label("X axis", htmlFor="scatter-x-axis"),
-                            dcc.Dropdown(
-                                id="scatter-x-axis",
-                                options=axis_options,
-                                value=default_x,
-                                clearable=False,
-                                className="scatter-option__dropdown",
-                            ),
-                        ],
-                        className="scatter-option",
-                    ),
-                    html.Div(
-                        [
-                            html.Label("Y axis", htmlFor="scatter-y-axis"),
-                            dcc.Dropdown(
-                                id="scatter-y-axis",
-                                options=axis_options,
-                                value=default_y,
-                                clearable=False,
-                                className="scatter-option__dropdown",
-                            ),
-                        ],
-                        className="scatter-option",
-                    ),
-                    html.Div(
-                        [
-                            html.Label("Color by", htmlFor="scatter-color-by"),
-                            optional_dropdown("scatter-color-by", column_options),
-                        ],
-                        className="scatter-option",
-                    ),
-                    html.Div(
-                        [
-                            html.Label("Size by", htmlFor="scatter-size-by"),
-                            optional_dropdown("scatter-size-by", size_options),
-                        ],
-                        className="scatter-option",
-                    ),
-                    html.Div(
-                        [
-                            html.Label("Text", htmlFor="scatter-text-by"),
-                            optional_dropdown("scatter-text-by", column_options),
-                        ],
-                        className="scatter-option scatter-option--text",
-                    ),
-                    html.Div(
-                        [
-                            html.Label("Plot title", htmlFor="scatter-plot-title"),
-                            dcc.Input(
-                                id="scatter-plot-title",
-                                type="text",
-                                value="Scatter plot",
-                                placeholder="Enter a title",
-                                className="scatter-option__input",
-                            ),
-                        ],
-                        className="scatter-option scatter-option--title",
-                    ),
-                    html.Button(
-                        "Build plot",
-                        id="build-scatter-plot",
-                        n_clicks=0,
-                        type="button",
-                        className="build-plot-button",
-                    ),
+                    html.Div(page_fields, className="scatter-options-page"),
                 ],
                 className="scatter-options",
             ),
-        ]
+        ], options
+
+    @app.callback(
+        Output("scatter-options-page", "data"),
+        Input({"type": "scatter-page-button", "page": ALL}, "n_clicks"),
+        prevent_initial_call=True,
+    )
+    def change_scatter_page(_clicks):
+        triggered = ctx.triggered_id
+        return triggered["page"] if isinstance(triggered, dict) else no_update
+
+    @app.callback(
+        Output("scatter-options-store", "data", allow_duplicate=True),
+        Input({"type": "scatter-option", "name": ALL}, "value"),
+        State({"type": "scatter-option", "name": ALL}, "id"),
+        State("scatter-options-store", "data"),
+        prevent_initial_call=True,
+    )
+    def save_scatter_options(values, ids, stored_options):
+        updated = dict(stored_options or {})
+        for component_id, value in zip(ids or [], values or []):
+            if isinstance(component_id, dict):
+                updated[component_id["name"]] = None if value == "" else value
+        return updated
 
     @app.callback(
         Output("main-plot-area", "children"),
+        Output("scatter-validation-message", "children"),
+        Output("scatter-plot-built", "data"),
         Input("build-scatter-plot", "n_clicks", allow_optional=True),
         Input("selected-species", "data"),
-        State("scatter-x-axis", "value", allow_optional=True),
-        State("scatter-y-axis", "value", allow_optional=True),
-        State("scatter-plot-title", "value", allow_optional=True),
-        State("scatter-color-by", "value", allow_optional=True),
-        State("scatter-size-by", "value", allow_optional=True),
-        State("scatter-text-by", "value", allow_optional=True),
+        State("scatter-options-store", "data"),
         State("species-table", "data"),
+        State("scatter-plot-built", "data"),
         prevent_initial_call=True,
     )
     def build_scatter_plot(
         n_clicks,
         selected_species,
-        x_value,
-        y_value,
-        title_value,
-        color_value,
-        size_value,
-        text_value,
+        stored_options,
         table_data,
+        plot_built,
     ):
         """Build the configured scatter plot and keep its selection highlighted."""
-        if not n_clicks:
-            return no_update
+        if ctx.triggered_id == "build-scatter-plot":
+            if not n_clicks:
+                return no_update, no_update, no_update
+        elif not plot_built:
+            return no_update, no_update, no_update
 
-        current_df, _, default_x, default_y = scatter_columns(table_data)
-        x_axis = x_value if x_value in current_df.columns else default_x
-        y_axis = y_value if y_value in current_df.columns else default_y
-        color_column = color_value if color_value in current_df.columns else None
-        size_column = size_value if size_value in current_df.columns else None
-        text_column = text_value if text_value in current_df.columns else None
-        if x_axis is None or y_axis is None:
-            return no_update
+        current_df, _, _, _ = scatter_columns(table_data)
+        options = normalize_scatter_options(stored_options, current_df)
+        errors = validate_scatter_options(options, current_df)
+        if errors:
+            return no_update, html.Ul([html.Li(error) for error in errors]), no_update
 
         selected_lookup = {
             str(name).casefold() for name in (selected_species or [])
@@ -358,13 +428,8 @@ def register_callbacks(app, df_table, df_scatter):
         ]
         figure = make_scatter_plot(
             current_df,
-            x=x_axis,
-            y=y_axis,
-            title=title_value or "Scatter plot",
             selection=selection_idx,
-            color=color_column,
-            size=size_column,
-            text=text_column,
+            **options,
         )
         return html.Div(
             dcc.Graph(
@@ -374,7 +439,7 @@ def register_callbacks(app, df_table, df_scatter):
                 className="dashboard-scatter-plot",
             ),
             className="dashboard-plot-card",
-        )
+        ), "", True
 
     @app.callback(
         Output("control-panel-tabs", "value"),

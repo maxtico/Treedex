@@ -90,6 +90,9 @@ def _plots_panel():
     """Plot selection controls; type-specific options are added later."""
     return html.Div(
         [
+            dcc.Store(id="scatter-options-store", storage_type="memory"),
+            dcc.Store(id="scatter-options-page", data=1, storage_type="memory"),
+            dcc.Store(id="scatter-plot-built", data=False, storage_type="memory"),
             html.Div(
                 [
                     html.Div(
@@ -145,13 +148,23 @@ def _plots_panel():
             ),
             html.Div(
                 [
-                    html.Span("Plot options", className="plot-control__label"),
-                    html.Span(
-                        "Choose a plot type to configure it",
-                        className="plot-options-placeholder",
+                    html.Div(
+                        [
+                            html.Span("Plot options", className="plot-control__label"),
+                            html.Span(
+                                "Choose a plot type to configure it",
+                                className="plot-options-placeholder",
+                            ),
+                        ],
+                        id="plot-options-content",
+                        className="plot-options-content",
+                    ),
+                    html.Div(
+                        id="scatter-validation-message",
+                        className="scatter-validation-message",
+                        role="alert",
                     ),
                 ],
-                id="plot-options-container",
                 className="plot-control plot-control--options",
             ),
         ],
