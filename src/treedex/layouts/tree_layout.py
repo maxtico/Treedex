@@ -18,9 +18,11 @@ def tree_layout(f_tree):
                 id="tree-graph",
                 figure=f_tree,
                 config={"responsive": True},
+                responsive=True,
                 className="tree-graph",
                 style={"width": "100%", "height": "100%"},
             )
         ],
+        id="tree-panel",
         className="tree-panel",
     )

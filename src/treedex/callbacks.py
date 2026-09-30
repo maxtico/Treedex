@@ -440,6 +440,7 @@ def register_callbacks(app, df_table, df_scatter):
                 id="scatter-plot",
                 figure=figure,
                 config={**scatter_config, "responsive": True},
+                responsive=True,
                 className="dashboard-scatter-plot",
             ),
             className="dashboard-plot-card",

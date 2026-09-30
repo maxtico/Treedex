@@ -29,12 +29,10 @@
 }
 
 .tree-panel {
-  width: 35%;
   min-width: 0;
   min-height: 0;
-  flex: 0 0 35%;
+  flex: 0 0 var(--tree-panel-width, 35%);
   padding: 5px;
-  border-right: 1px solid #ccc;
   box-sizing: border-box;
   overflow: hidden;
 }
@@ -43,6 +41,47 @@
   width: 100%;
   height: 100%;
   min-height: 0;
+}
+
+.workspace-divider {
+  position: relative;
+  flex: 0 0 9px;
+  cursor: col-resize;
+  touch-action: none;
+  background: var(--control-surface);
+}
+
+.workspace-divider::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 4px;
+  width: 1px;
+  background: var(--control-border);
+}
+
+.workspace-divider:hover,
+.workspace-divider:focus-visible,
+.treedex-workspace.is-resizing .workspace-divider {
+  background: var(--control-accent-soft);
+}
+
+.workspace-divider:hover::after,
+.workspace-divider:focus-visible::after,
+.treedex-workspace.is-resizing .workspace-divider::after {
+  background: var(--control-accent);
+}
+
+.workspace-divider:focus-visible {
+  outline: 2px solid var(--control-accent);
+  outline-offset: -2px;
+}
+
+.treedex-workspace.is-resizing,
+.treedex-workspace.is-resizing * {
+  cursor: col-resize !important;
+  user-select: none;
 }
 
 .dashboard-panel {
@@ -654,6 +693,7 @@
   }
   .treedex-workspace > div { width: 100% !important; flex-basis: auto !important; }
   .tree-panel { height: 55vh; min-height: 420px; }
+  .workspace-divider { display: none; }
   .dashboard-panel { height: 70vh; min-height: 520px; }
   .control-bar__inner { height: 100px; padding: 0 14px; flex-direction: column; }
   .control-bar:hover .control-bar__inner,

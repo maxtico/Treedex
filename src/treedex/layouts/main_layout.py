@@ -39,6 +39,21 @@ def make_layout(df_table, f_tree, initial_shape=DEFAULT_SHAPE):
             html.Main(
                 [
                     tree_layout(f_tree),
+                    html.Div(
+                        id="workspace-divider",
+                        className="workspace-divider",
+                        role="separator",
+                        tabIndex=0,
+                        title="Drag to resize panels. Use arrow keys, or double-click to reset.",
+                        **{
+                            "aria-label": "Tree panel width",
+                            "aria-orientation": "vertical",
+                            "aria-controls": "tree-panel",
+                            "aria-valuemin": "20",
+                            "aria-valuemax": "80",
+                            "aria-valuenow": "35",
+                        },
+                    ),
                     dashboard_layout(df_table),
                 ],
                 className="treedex-workspace",
