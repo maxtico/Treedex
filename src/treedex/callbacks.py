@@ -6,6 +6,9 @@ import pandas as pd
 from dash import ALL, Input, Output, State, ctx, dcc, html, no_update
 from .components.plots import make_scatter_plot, scatter_config
 from .scatter_options import normalize_scatter_options, validate_scatter_options
+from .pie_options import normalize_pie_options, validate_pie_options
+from .components.pie import make_pie_plot
+from .layouts.pie_options import pie_options_menu
 
 def register_callbacks(app, df_table, df_scatter):
 
@@ -124,13 +127,15 @@ def register_callbacks(app, df_table, df_scatter):
         Output("species-table", "selected_rows"),
         Input("tree-graph", "clickData"),
         Input("scatter-plot", "clickData", allow_optional=True),
+        Input("pie-plot", "clickData", allow_optional=True),
         Input("species-table", "selected_rows"),
         State("selected-species", "data"),
         State("species-table", "data"),
+        State("pie-plot", "figure", allow_optional=True),
         prevent_initial_call=True,
     )
-    def synchronize_selection(tree_click, scatter_click, selected_rows, current, table_data):
-        """Keep tree, scatter and table selections in one shared state."""
+    def synchronize_selection(tree_click, scatter_click, pie_click, selected_rows, current, table_data, pie_figure):
+        """Keep tree, plots and table selections in one shared state."""
         trigger = ctx.triggered_id
 
         current_table = table_data or []
@@ -161,6 +166,15 @@ def register_callbacks(app, df_table, df_scatter):
             )
             selected = canonical_species([clicked_name], species)
 
+        elif trigger == "pie-plot":
+            point = (pie_click or {}).get("points", [{}])[0]
+            traces = (pie_figure or {}).get("data", [])
+            trace_index = point.get("curveNumber", 0)
+            if not 0 <= trace_index < len(traces):
+                return no_update, no_update
+            membership = (traces[trace_index].get("meta") or {}).get("species_by_label", {})
+            selected = canonical_species(membership.get(str(point.get("label")), []), species)
+
         elif trigger == "tree-graph":
             point = (tree_click or {}).get("points", [{}])[0]
             node = point.get("customdata") or {}
@@ -187,14 +201,22 @@ def register_callbacks(app, df_table, df_scatter):
     @app.callback(
         Output("plot-options-content", "children"),
         Output("scatter-options-store", "data"),
+        Output("pie-options-store", "data"),
         Input("plot-type-selector", "value"),
         Input("species-table", "data"),
         Input("scatter-options-page", "data"),
+        Input("pie-options-page", "data"),
         State("scatter-options-store", "data"),
+        State("pie-options-store", "data"),
     )
-    def show_plot_options(plot_type, table_data, active_page, stored_options):
+    def show_plot_options(plot_type, table_data, active_page, pie_page, stored_options, stored_pie_options):
         """Render controls for the plot type selected by the user."""
         label = html.Span("Plot options", className="plot-control__label")
+
+        if plot_type == "pie":
+            current_df, _, _, _ = scatter_columns(table_data)
+            options = normalize_pie_options(stored_pie_options, current_df)
+            return pie_options_menu(options, current_df, pie_page), no_update, options
 
         if plot_type != "scatter":
             message = (
@@ -205,7 +227,7 @@ def register_callbacks(app, df_table, df_scatter):
             return [
                 label,
                 html.Span(message, className="plot-options-placeholder"),
-            ], stored_options
+            ], stored_options, no_update
 
         current_df, numeric_cols, default_x, default_y = scatter_columns(table_data)
         if not numeric_cols:
@@ -215,7 +237,7 @@ def register_callbacks(app, df_table, df_scatter):
                     "The current data needs at least one numeric column.",
                     className="plot-options-placeholder",
                 ),
-            ], stored_options
+            ], stored_options, no_update
 
         options = normalize_scatter_options(stored_options, current_df)
         active_page = active_page if active_page in (1, 2, 3, 4) else 1
@@ -366,7 +388,7 @@ def register_callbacks(app, df_table, df_scatter):
                 ],
                 className="scatter-options",
             ),
-        ], options
+        ], options, no_update
 
     @app.callback(
         Output("scatter-options-page", "data"),
@@ -375,7 +397,30 @@ def register_callbacks(app, df_table, df_scatter):
     )
     def change_scatter_page(_clicks):
         triggered = ctx.triggered_id
-        return triggered["page"] if isinstance(triggered, dict) else no_update
+        return triggered["page"] if isinstance(triggered, dict) and any(_clicks or []) else no_update
+
+    @app.callback(
+        Output("pie-options-page", "data"),
+        Input({"type": "pie-page-button", "page": ALL}, "n_clicks"),
+        prevent_initial_call=True,
+    )
+    def change_pie_page(clicks):
+        triggered = ctx.triggered_id
+        return triggered["page"] if isinstance(triggered, dict) and any(clicks or []) else no_update
+
+    @app.callback(
+        Output("pie-options-store", "data", allow_duplicate=True),
+        Input({"type": "pie-option", "name": ALL}, "value"),
+        State({"type": "pie-option", "name": ALL}, "id"),
+        State("pie-options-store", "data"),
+        prevent_initial_call=True,
+    )
+    def save_pie_options(values, ids, stored_options):
+        updated = dict(stored_options or {})
+        for component_id, value in zip(ids or [], values or []):
+            if isinstance(component_id, dict):
+                updated[component_id["name"]] = None if value == "" else value
+        return updated
 
     @app.callback(
         Output("scatter-options-store", "data", allow_duplicate=True),
@@ -394,57 +439,78 @@ def register_callbacks(app, df_table, df_scatter):
     @app.callback(
         Output("main-plot-area", "children"),
         Output("scatter-validation-message", "children"),
-        Output("scatter-plot-built", "data"),
+        Output("built-plot", "data"),
         Input("build-scatter-plot", "n_clicks", allow_optional=True),
+        Input("build-pie-plot", "n_clicks", allow_optional=True),
         Input("selected-species", "data"),
         State("scatter-options-store", "data"),
+        State("pie-options-store", "data"),
         State("species-table", "data"),
-        State("scatter-plot-built", "data"),
+        State("built-plot", "data"),
+        State({"type": "pie-option", "name": ALL}, "value"),
+        State({"type": "pie-option", "name": ALL}, "id"),
+        State({"type": "scatter-option", "name": ALL}, "value"),
+        State({"type": "scatter-option", "name": ALL}, "id"),
         prevent_initial_call=True,
     )
-    def build_scatter_plot(
-        n_clicks,
-        selected_species,
-        stored_options,
-        table_data,
-        plot_built,
+    def build_plot(
+        scatter_clicks, pie_clicks, selected_species, scatter_options,
+        pie_options, table_data, built_plot, pie_values, pie_ids,
+        scatter_values, scatter_ids,
     ):
-        """Build the configured scatter plot and keep its selection highlighted."""
-        if ctx.triggered_id == "build-scatter-plot":
-            if not n_clicks:
+        """Build on demand; selection updates use the last successfully built settings."""
+        trigger = ctx.triggered_id
+        if trigger in ("build-scatter-plot", "build-pie-plot"):
+            plot_type = "pie" if trigger == "build-pie-plot" else "scatter"
+            if not (pie_clicks if plot_type == "pie" else scatter_clicks):
                 return no_update, no_update, no_update
-        elif not plot_built:
+            stored_options = dict((pie_options if plot_type == "pie" else scatter_options) or {})
+            values, ids = (pie_values, pie_ids) if plot_type == "pie" else (scatter_values, scatter_ids)
+            for component_id, value in zip(ids or [], values or []):
+                stored_options[component_id["name"]] = None if value == "" else value
+        elif not built_plot:
             return no_update, no_update, no_update
+        else:
+            plot_type = built_plot["type"]
+            stored_options = built_plot["options"]
 
         current_df, _, _, _ = scatter_columns(table_data)
-        options = normalize_scatter_options(stored_options, current_df)
-        errors = validate_scatter_options(options, current_df)
+        normalize = normalize_pie_options if plot_type == "pie" else normalize_scatter_options
+        validate = validate_pie_options if plot_type == "pie" else validate_scatter_options
+        options = normalize(stored_options, current_df)
+        errors = validate(options, current_df)
         if errors:
             return no_update, html.Ul([html.Li(error) for error in errors]), no_update
 
-        selected_lookup = {
-            str(name).casefold() for name in (selected_species or [])
-        }
-        selection_idx = [
-            index
-            for index, name in enumerate(current_df["Species"])
-            if str(name).casefold() in selected_lookup
-        ]
-        figure = make_scatter_plot(
-            current_df,
-            selection=selection_idx,
-            **options,
-        )
+        try:
+            if plot_type == "pie":
+                figure = make_pie_plot(current_df, selected_species=selected_species, **options)
+            else:
+                selected_lookup = {str(name).casefold() for name in (selected_species or [])}
+                selection_idx = [
+                    index for index, name in enumerate(current_df["Species"])
+                    if str(name).casefold() in selected_lookup
+                ]
+                figure = make_scatter_plot(current_df, selection=selection_idx, **options)
+        except (ValueError, TypeError, KeyError) as exc:
+            return no_update, f"Could not build {plot_type} plot: {exc}", no_update
+
+        fixed_size = plot_type == "pie" and any(options.get(key) is not None for key in ("width", "height"))
+        graph_style = {
+            "width": options.get("width") or "100%",
+            "height": options.get("height") or "100%",
+        } if fixed_size else None
         return html.Div(
             dcc.Graph(
-                id="scatter-plot",
-                figure=figure,
-                config={**scatter_config, "responsive": True},
-                responsive=True,
+                id=f"{plot_type}-plot", figure=figure,
+                config={**scatter_config, "responsive": not fixed_size},
+                responsive=not fixed_size,
+                style=graph_style,
                 className="dashboard-scatter-plot",
             ),
             className="dashboard-plot-card",
-        ), "", True
+            style={"overflow": "auto"} if fixed_size else None,
+        ), "", {"type": plot_type, "options": options}
 
     app.clientside_callback(
         """

@@ -92,7 +92,9 @@ def _plots_panel():
         [
             dcc.Store(id="scatter-options-store", storage_type="memory"),
             dcc.Store(id="scatter-options-page", data=1, storage_type="memory"),
-            dcc.Store(id="scatter-plot-built", data=False, storage_type="memory"),
+            dcc.Store(id="pie-options-store", storage_type="memory"),
+            dcc.Store(id="pie-options-page", data=1, storage_type="memory"),
+            dcc.Store(id="built-plot", storage_type="memory"),
             html.Div(
                 [
                     html.Div(
