@@ -213,14 +213,12 @@ def _data_panel():
             ),
             dcc.Upload(
                 id="upload-data",
-                children=html.Div(
-                    [
-                        html.Span("+", **{"aria-hidden": "true"}),
-                        html.Span(" Upload data"),
-                    ]
+                children=html.Button(
+                    "Upload data",
+                    type="button",
+                    className="upload-data-button",
                 ),
                 multiple=False,
-                className="control-panel__placeholder-action",
                 accept=".csv,.tsv,.txt",
             ),
             html.Div(
@@ -268,14 +266,6 @@ def top_control_panel(initial_shape=DEFAULT_SHAPE):
                             selected_className="control-tab--selected",
                         ),
                     ],
-                ),
-                html.Button(
-                    "×",
-                    id="control-panel-close",
-                    className="control-panel__close",
-                    type="button",
-                    title="Close plot controls",
-                    **{"aria-label": "Close plot controls"},
                 ),
             ],
             className="control-bar__inner",

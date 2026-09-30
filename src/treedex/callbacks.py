@@ -349,16 +349,20 @@ def register_callbacks(app, df_table, df_scatter):
                             **{"aria-label": f"Scatter options page {page}", "aria-pressed": str(page == active_page).lower()},
                         ) for page in range(1, 5)
                     ], className="scatter-pages", role="group", **{"aria-label": "Scatter option pages"}),
-                    html.Button(
-                        "Build plot", id="build-scatter-plot", n_clicks=0,
-                        type="button", className="build-plot-button",
-                    ),
                 ], className="scatter-options-actions")],
                 className="scatter-options-header",
             ),
             html.Div(
                 [
-                    html.Div(page_fields, className="scatter-options-page"),
+                    html.Div(
+                        page_fields + [
+                            html.Button(
+                                "Build plot", id="build-scatter-plot", n_clicks=0,
+                                type="button", className="build-plot-button",
+                            ),
+                        ],
+                        className="scatter-options-page",
+                    ),
                 ],
                 className="scatter-options",
             ),
@@ -441,17 +445,28 @@ def register_callbacks(app, df_table, df_scatter):
             className="dashboard-plot-card",
         ), "", True
 
-    @app.callback(
+    app.clientside_callback(
+        """
+        function(addClicks) {
+            if (!addClicks) {
+                return [dash_clientside.no_update, dash_clientside.no_update];
+            }
+            const panel = document.getElementById("top-control-panel");
+            // Repeated clicks should still leave only one mouse-leave handler.
+            panel.onmouseleave = function() {
+                if (panel.contains(document.activeElement)) {
+                    document.activeElement.blur();
+                }
+                dash_clientside.set_props("top-control-panel", {
+                    className: "control-bar"
+                });
+                panel.onmouseleave = null;
+            };
+            return ["plots", "control-bar is-open"];
+        }
+        """,
         Output("control-panel-tabs", "value"),
         Output("top-control-panel", "className"),
         Input("add-plot-btn", "n_clicks", allow_optional=True),
-        Input("control-panel-close", "n_clicks"),
         prevent_initial_call=True,
     )
-    def toggle_plot_controls(add_clicks, close_clicks):
-        """Open plot controls from the dashboard and close them on request."""
-        if ctx.triggered_id == "add-plot-btn" and add_clicks:
-            return "plots", "control-bar is-open"
-        if ctx.triggered_id == "control-panel-close" and close_clicks:
-            return no_update, "control-bar"
-        return no_update, no_update
