@@ -152,3 +152,46 @@ On Windows, activate it with:
 ```
 
 Then use the same `treedex --tree ... --data ...` command shown above.
+
+## Data Manager
+
+Open **Controls → Data → Open Data Manager** to inspect the active dataset in
+its own workspace. **Back to plots** restores the plot workspace. This first
+version manages one active dataset: uploading CSV, TSV or UTF-8 TXT replaces
+it and its metadata. Tables without a `Species` column can also be loaded.
+
+- **Overview** shows row and column counts, missing values and tree matches.
+  Rename the dataset here, or delete it after confirming. Deletion clears the
+  linked table, plot instances and selections.
+- **Data Preview** searches all columns using literal, case-insensitive text,
+  supports sorting on multiple columns, and returns 50 rows per page. Choose
+  visible preview columns with the dropdown.
+- **Metadata** shows inferred types, missing counts and distinct counts. Edit
+  descriptions, roles, units and JSON value definitions, then **Save metadata**.
+  **Export saved metadata** downloads a JSON document without the data rows.
+- **Columns** supports renaming, explicit type conversion, ordering and default
+  preview visibility. Positions must be distinct positive integers. A primary
+  identifier must be unique and nonmissing; the tree key links rows to leaf
+  names (case-insensitive). Apply changes as one transaction; invalid changes
+  preserve the previous dataset. Column roles are descriptive metadata; key
+  dropdowns configure the actual identifiers.
+
+The tree key remains linked when its column is renamed. Plots and the linked
+species table expose that key as `Species`; rename an existing `Species`
+column before selecting a different key to avoid name conflicts. Built plots
+and saved plot drafts follow renamed columns. Existing plot normalizers
+reconcile settings after uploads and type conversions. Data changes clear
+selection; metadata edits and dataset renaming preserve it.
+
+Saved metadata persists when switching tabs or workspaces in the current page.
+Reloading the page restores the command-line dataset. Unsaved editor changes
+should be saved before another dataset operation. Multiple datasets, metadata
+import, disk persistence and out-of-core processing are future work. Preview
+pagination limits rendered rows, but the active dataset is still held in a Dash
+memory store and transferred with callback requests.
+
+Run the Data Manager validation and 20,000-row preview check with:
+
+```bash
+python -m unittest discover -s tests -p test_data_manager.py -v
+```

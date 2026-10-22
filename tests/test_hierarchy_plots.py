@@ -287,9 +287,8 @@ class HierarchyCallbackTests(HierarchyFixture, unittest.TestCase):
     def test_uploaded_taxonomy_columns_feed_menus_and_builders(self):
         csv = 'Species,Taxon,Abundance\na,Mammals,2\nb,Mammals,3\nc,Birds,5\n'
         contents = 'data:text/csv;base64,' + base64.b64encode(csv.encode()).decode()
-        data, columns, rows, selected, status = self.callbacks['upload_data'](contents, 'taxonomy.csv')
-        self.assertEqual(rows, [])
-        self.assertEqual(selected, [])
+        from treedex.data_manager import parse_upload, dashboard_records
+        data, columns = dashboard_records(parse_upload(contents, 'taxonomy.csv'))
         self.assertEqual([col['id'] for col in columns], ['Species', 'Taxon', 'Abundance'])
         self.frame = pd.DataFrame(data)
         for kind in HIERARCHY_PLOT_TYPES:

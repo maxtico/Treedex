@@ -5,6 +5,7 @@ from ete4.dashview import DEFAULT_SHAPE, normalize_shape, tree_to_plotly
 from .layouts.main_layout import make_layout
 from .callbacks import register_callbacks
 from .tree_callbacks import register_tree_callbacks
+from .data_callbacks import register_data_callbacks
 
 """
 Dash application factory for Treedex.
@@ -53,5 +54,6 @@ def create_app(df_table, tree, initial_shape=DEFAULT_SHAPE):
     # Register all Dash callbacks (interactivity logic)
     register_callbacks(app, df_table, df_table)
     register_tree_callbacks(app, tree)
+    register_data_callbacks(app, tree)
 
     return app

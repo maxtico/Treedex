@@ -1,7 +1,4 @@
 # callbacks.py
-import base64
-import io
-
 import pandas as pd
 from dash import ALL, ClientsideFunction, Input, Output, State, ctx, dcc, html, no_update
 from .components.plots import make_scatter_plot, scatter_config
@@ -63,96 +60,9 @@ def register_callbacks(app, df_table, df_scatter):
         prevent_initial_call=True,
     )
 
-    @app.callback(
-        Output("species-table", "data"),
-        Output("species-table", "columns"),
-        Output("species-table", "selected_rows", allow_duplicate=True),
-        Output("selected-species", "data", allow_duplicate=True),
-        Output("upload-data-status", "children"),
-        Input("upload-data", "contents"),
-        State("upload-data", "filename"),
-        prevent_initial_call=True,
-    )
-    def upload_data(contents, filename):
-        """Parse an uploaded CSV/TSV/TXT file and replace the table contents."""
-        if not contents:
-            return no_update, no_update, no_update, no_update, no_update
-
-        try:
-            _, encoded = contents.split(",", 1)
-            decoded = base64.b64decode(encoded)
-            text = decoded.decode("utf-8-sig")
-
-            lower_name = (filename or "").lower()
-            if lower_name.endswith(".tsv"):
-                uploaded_df = pd.read_csv(io.StringIO(text), sep="\\t")
-            elif lower_name.endswith(".csv"):
-                uploaded_df = pd.read_csv(io.StringIO(text))
-            elif lower_name.endswith(".txt"):
-                uploaded_df = pd.read_csv(io.StringIO(text), sep=None, engine="python")
-            else:
-                return (
-                    no_update,
-                    no_update,
-                    no_update,
-                    no_update,
-                    "Unsupported file type. Please upload CSV, TSV or TXT.",
-                )
-
-            uploaded_df.columns = [str(col).strip() for col in uploaded_df.columns]
-
-            if uploaded_df.empty:
-                return (
-                    no_update,
-                    no_update,
-                    no_update,
-                    no_update,
-                    "The uploaded file contains no rows.",
-                )
-
-            if "Species" not in uploaded_df.columns:
-                return (
-                    no_update,
-                    no_update,
-                    no_update,
-                    no_update,
-                    "The uploaded file must contain a 'Species' column.",
-                )
-
-            columns = [
-                {"name": str(col), "id": str(col)}
-                for col in uploaded_df.columns
-            ]
-
-            return (
-                uploaded_df.to_dict("records"),
-                columns,
-                [],
-                [],
-                f"Loaded {filename}: {len(uploaded_df)} rows × {len(uploaded_df.columns)} columns.",
-            )
-
-        except UnicodeDecodeError:
-            return (
-                no_update,
-                no_update,
-                no_update,
-                no_update,
-                "Could not read the file as UTF-8 text.",
-            )
-        except Exception as exc:
-            return (
-                no_update,
-                no_update,
-                no_update,
-                no_update,
-                f"Could not load {filename or 'the file'}: {exc}",
-            )
-
-
     def scatter_columns(table_data):
         """Return the current data frame and sensible numeric axis defaults."""
-        current_df = pd.DataFrame(table_data) if table_data else df_scatter.copy()
+        current_df = pd.DataFrame(table_data) if table_data is not None else df_scatter.copy()
         numeric_cols = current_df.select_dtypes(include="number").columns.tolist()
         default_x = "X" if "X" in numeric_cols else (numeric_cols[0] if numeric_cols else None)
         default_y = "Y" if "Y" in numeric_cols else (
@@ -170,7 +80,7 @@ def register_callbacks(app, df_table, df_scatter):
         return [
             name
             for name in species
-            if name.casefold() in requested
+            if name and name.casefold() in requested
         ]
 
     @app.callback(
@@ -190,9 +100,8 @@ def register_callbacks(app, df_table, df_scatter):
 
         current_table = table_data or []
         species = [
-            str(row.get("Species"))
+            str(row.get("Species")) if row.get("Species") is not None else ""
             for row in current_table
-            if row.get("Species") is not None
         ]
 
         if trigger == "species-table":
@@ -577,6 +486,8 @@ def register_callbacks(app, df_table, df_scatter):
             return no_update, no_update, no_update
 
         current_df, _, _, _ = scatter_columns(table_data)
+        if current_df.empty:
+            return no_update, "Upload data before building a plot.", no_update
         if plot_type in HIERARCHY_PLOT_TYPES:
             options = normalize_hierarchy_options(plot_type, stored_options, current_df)
             errors = validate_hierarchy_options(plot_type, options, current_df)
@@ -732,6 +643,8 @@ def register_callbacks(app, df_table, df_scatter):
     def render_managed_plots(instances, selected_species, table_data):
         current_df, _, _, _ = scatter_columns(table_data)
         cards = []
+        if current_df.empty:
+            return html.Div("No dataset loaded. Use Data → Upload data.", className="dashboard-empty-state")
         for item in (instances or []):
             if not item.get("visible", True) or not item.get("type"):
                 continue

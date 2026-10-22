@@ -1,4 +1,5 @@
 from dash import html, dash_table, dcc
+from .data_manager import data_manager_layout
 
 """
 Layout component for the main dashboard panel.
@@ -32,6 +33,7 @@ def dashboard_layout(df_table):
 
     return html.Div(
         children=[
+            data_manager_layout(),
             html.Div([
                 html.Div([
                     html.Button("☰  Plots", id="toggle-plots-sidebar", n_clicks=0,
@@ -44,12 +46,14 @@ def dashboard_layout(df_table):
                     html.Div(id="plots-sidebar-list", className="plots-sidebar-list"),
                     html.Button("+ Add plot", id="sidebar-add-plot", n_clicks=0, className="plots-sidebar-add"),
                 ], id="plots-sidebar", className="plots-sidebar is-closed"),
-            ], className="plots-layout"),
+            ], id="plots-layout", className="plots-layout"),
             dash_table.DataTable(
                 id="species-table",
                 columns=[{"name": col, "id": col} for col in df_table.columns],
                 data=df_table.to_dict("records"),
                 row_selectable="multi",
+                page_action="native",
+                page_size=50,
                 fixed_rows={"headers": True},
                 style_table={
                     "height": "145px",

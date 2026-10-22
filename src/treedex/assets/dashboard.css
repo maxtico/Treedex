@@ -830,3 +830,20 @@
 #current-plot-selector .Select-menu-outer {
     z-index: 2500 !important;
 }
+
+/* Data management occupies the same workspace as plots. */
+.data-manager { flex:1 1 auto; min-height:0; overflow:auto; padding:20px; background:#fff; border:1px solid #e2e8f0; border-radius:12px; }
+.data-manager-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.data-manager h2 { font-size:24px; margin:0; }
+.data-manager h3 { font-size:20px; }
+.data-manager p, #data-preview-count { color:#526273; margin:12px 0; }
+.data-manager button { padding:8px 14px; margin:8px 8px 8px 0; border:1px solid #cbd5e1; background:#f8fafc; border-radius:7px; color:#183b48; }
+.data-manager button:hover { background:#e8f3f1; }
+.data-manager button:focus-visible, .data-manager input:focus-visible { outline:2px solid var(--control-accent); outline-offset:2px; }
+.data-manager .data-manager-danger { color:#a3263e; }
+.data-manager label { display:block; font-weight:600; margin:12px 0 5px; }
+.data-manager input { padding:8px; border:1px solid #cbd5e1; border-radius:6px; max-width:100%; }
+.data-manager-tab { padding-top:18px; }
+.data-manager-summary { padding:16px; background:#edf6f4; border-radius:8px; font-size:17px; margin:12px 0; }
+#data-manager-status { margin:8px 0; color:#315963; }
+.data-manager .dash-table-container .dropdown { position:static; }

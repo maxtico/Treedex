@@ -75,20 +75,26 @@ def _tree_panel(initial_shape):
     )
 
 
+def plot_stores():
+    """Shared plot state stays mounted while navigating Data and Tree controls."""
+    return [
+        dcc.Store(id="scatter-options-store", storage_type="memory"),
+        dcc.Store(id="scatter-options-page", data=1, storage_type="memory"),
+        dcc.Store(id="pie-options-store", storage_type="memory"),
+        dcc.Store(id="pie-options-page", data=1, storage_type="memory"),
+        dcc.Store(id="built-plot", storage_type="memory"),
+        dcc.Store(id="plot-instances", data=[{"id": "plot_1", "type": None, "options": {}, "visible": True, "pinned": False}], storage_type="session"),
+        dcc.Store(id="basic-options-store", data={}, storage_type="memory"),
+        dcc.Store(id="basic-options-page", data={}, storage_type="memory"),
+        dcc.Store(id="hierarchy-options-store", data={}, storage_type="memory"),
+        dcc.Store(id="hierarchy-options-page", data={}, storage_type="memory"),
+    ]
+
+
 def _plots_panel():
     """Plot selection controls and saved settings for each plot type."""
     return html.Div(
         [
-            dcc.Store(id="scatter-options-store", storage_type="memory"),
-            dcc.Store(id="scatter-options-page", data=1, storage_type="memory"),
-            dcc.Store(id="pie-options-store", storage_type="memory"),
-            dcc.Store(id="pie-options-page", data=1, storage_type="memory"),
-            dcc.Store(id="built-plot", storage_type="memory"),
-            dcc.Store(id="plot-instances", data=[{"id": "plot_1", "type": None, "options": {}, "visible": True, "pinned": False}], storage_type="session"),
-            dcc.Store(id="basic-options-store", data={}, storage_type="memory"),
-            dcc.Store(id="basic-options-page", data={}, storage_type="memory"),
-            dcc.Store(id="hierarchy-options-store", data={}, storage_type="memory"),
-            dcc.Store(id="hierarchy-options-page", data={}, storage_type="memory"),
             html.Div(
                 [
                     html.Div(
@@ -180,6 +186,7 @@ def _data_panel():
                 ],
                 className="control-panel__heading",
             ),
+            html.Button("Open Data Manager", id="open-data-manager", type="button", className="upload-data-button"),
             dcc.Upload(
                 id="upload-data",
                 children=html.Button(

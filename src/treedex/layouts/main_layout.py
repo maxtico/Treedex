@@ -1,8 +1,9 @@
 from dash import dcc, html
 from ete4.dashview import DEFAULT_SHAPE, make_tree_view_config
+from ..data_manager import make_dataset
 from .tree_layout import tree_layout
 from .dashboard_layout import dashboard_layout
-from .control_panel import top_control_panel
+from .control_panel import top_control_panel, plot_stores
 
 """
 Main application layout.
@@ -28,13 +29,17 @@ def make_layout(df_table, f_tree, initial_shape=DEFAULT_SHAPE):
         The root layout container.
     """
 
+    dataset = make_dataset(df_table) if len(df_table.columns) else None
     return html.Div(
         children=[
+            dcc.Store(id="dataset-store", data=dataset),
+            dcc.Store(id="dataset-schema", data=dataset["columns"] if dataset else []),
             dcc.Store(
                 id="tree-view-config",
                 data=make_tree_view_config(initial_shape),
             ),
             dcc.Store(id="selected-species", data=[]),
+            *plot_stores(),
             top_control_panel(initial_shape=initial_shape),
             html.Main(
                 [
